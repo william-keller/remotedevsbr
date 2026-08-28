@@ -36,7 +36,7 @@ Current about:
 ${payload.about || ""}`;
     }
 
-    const ai = await callAI(system, user, { model: "google/gemini-3-flash-preview" });
+    const ai = await callAI(system, user, { model: "google/gemma-4-31b-it:free" });
     if (!ai.ok) {
       return new Response(JSON.stringify({ error: ai.error }), { status: ai.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

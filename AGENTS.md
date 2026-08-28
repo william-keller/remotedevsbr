@@ -17,8 +17,8 @@ The core growth engine for the platform. Developers upload a PDF, we extract the
 
 **Provider:** OpenAI-compatible chat completions endpoint via `_shared/ai.ts` (defaults to OpenRouter at `https://openrouter.ai/api/v1`). Configured with the `OPENAI_API_KEY` and optional `OPENAI_BASE_URL` edge secrets.
 
-**Model Choice (current):** Google Gemini Flash via OpenRouter. `google/gemini-2.5-flash` for analyze-resume and cover-letter; `google/gemini-3-flash-preview` for ai-tools.
-* **Why Flash?** Speed and cost-efficiency. Resume analysis requires reading ~1,000-2,000 tokens of raw text and generating a few hundred tokens of structured JSON.
+**Model Choice (current):** Google Gemma 4 via OpenRouter's free tier. `google/gemma-4-31b-it:free` for analyze-resume, cover-letter, and ai-tools.
+* **Why free tier?** Zero cost while the account carries no OpenRouter credits. Resume analysis requires reading ~1,000-2,000 tokens of raw text and generating a few hundred tokens of structured JSON. Free-tier `:free` models impose daily request limits and lower rate limits; revisit paid Flash-tier models if they start throttling or quality regresses.
 
 **Token Flow:**
 1. **Input (Prompt + Payload):** ~1,500 - 3,000 tokens depending on resume length.
@@ -36,7 +36,7 @@ We use a zero-shot prompt with strict JSON schema enforcement to ensure the outp
 
 Because the Resume Analyzer is a **Free Tool** used to drive top-of-funnel acquisition, managing token costs is paramount.
 
-* **Cost Optimization:** We use a Flash-tier model via OpenRouter to keep latency and per-request costs low. Avoid hardcoding cost-per-resume assumptions in product logic; treat pricing as a deploy-time/config concern that can change with provider/model.
+* **Cost Optimization:** We use a free-tier model via OpenRouter to keep per-request costs at zero. Avoid hardcoding cost-per-resume assumptions in product logic; treat pricing as a deploy-time/config concern that can change with provider/model.
 * **Gate Strategy:** While the compute is free, the *value* of the full report is high. We present the user with the partial analysis (`overall_score` + `top_strengths`), but require them to create an account and complete their profile to unlock the `detailed_feedback`. This converts cheap LLM tokens into high-value structured profile data.
 
 ## 3. Future Agent: Recruiter Matchmaker (Phase 6)
@@ -54,7 +54,7 @@ The upcoming Phase 6 of the strategic sequence involves building an AI-driven ma
 
 **Token Considerations for Matching:**
 * Candidate data must be pre-summarized before embedding to reduce dimensionality and noise.
-* Real-time generation for recruiters can afford higher latency/cost models if needed (since recruiters are paying subscribers), but RAG with Flash is likely sufficient.
+* Real-time generation for recruiters can afford higher latency/cost models if needed (since recruiters are paying subscribers), but RAG with a free-tier model is likely sufficient.
 
 ## 4. Edge Function Security & Best Practices
 
@@ -87,7 +87,7 @@ This serves as a quick-reference map for all major touchpoints within the archit
 
 ### Supabase Edge Functions (API)
 * `analyze-resume` (POST) - Takes a PDF or text, extracts text if needed, calls the shared OpenAI-compatible helper (Gemini Flash via OpenRouter), stores `resume_analyses`, and returns partial + gated full report.
-* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (currently configured as `google/gemini-3-flash-preview`).
+* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (currently configured as `google/gemma-4-31b-it:free`).
 * `track-activity` (POST) - Logs user actions, updates daily streaks, and checks for newly unlocked achievements.
 * `process-engagement-emails` (CRON) - Background job that emails users about lost streaks or incomplete profiles.
 * `recruiter-search` (POST) - Queries the `profiles` table. Returns full or obfuscated (blurred) data depending on the recruiter's subscription tier.
