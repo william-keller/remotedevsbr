@@ -81,7 +81,10 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return json({ error: "Invalid JSON body" }, 400);
+    }
     const { action } = body;
 
     if (action === "generate") {

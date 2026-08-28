@@ -6,7 +6,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { kind, payload } = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const { kind, payload } = body;
     if (!["resume", "linkedin"].includes(kind)) {
       return new Response(JSON.stringify({ error: "Invalid kind" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
