@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "supabase:deploy:fetch-og": "supabase functions deploy fetch-og"
   },
   "dependencies": {
