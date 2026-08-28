@@ -3,7 +3,7 @@
 // rate limiting, JWT-based identity binding when a session is present, and validation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { enforceRateLimit } from "../_shared/rate_limit.ts";
-import { callAI as callOpenAIRoute } from "../_shared/ai.ts";
+import { callAI as callOpenAIRoute, FREE_MODELS } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,7 +64,7 @@ function json(data: unknown, status: number) {
 }
 
 async function runAI(system: string, user: string) {
-  const ai = await callOpenAIRoute(system, user, { models: ["google/gemma-4-31b-it:free", "minimax/minimax-m3:free"], json: true });
+  const ai = await callOpenAIRoute(system, user, { models: FREE_MODELS, json: true });
   if (!ai.ok) {
     return { error: ai.error, status: ai.status };
   }

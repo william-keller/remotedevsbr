@@ -15,6 +15,16 @@ const APP_TITLE = "RemoteDevsBR";
 const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_ATTEMPTS = 3;
 
+// Ordered best to worst capability, each on a distinct provider pool where
+// possible so a saturated pool falls through to the next model.
+export const FREE_MODELS: string[] = [
+  "z-ai/glm-5.2:free",
+  "minimax/minimax-m3:free",
+  "minimax/minimax-m2.7:free",
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+];
+
 export async function callAI(
   system: string,
   user: string,
