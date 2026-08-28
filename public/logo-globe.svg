@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Globe Outer Circle in Emerald Gradient -->
+  <circle cx="256" cy="256" r="210" stroke="url(#emerald_grad)" stroke-width="26" stroke-linecap="round"/>
+  
+  <!-- Equator Line -->
+  <line x1="46" y1="256" x2="466" y2="256" stroke="url(#emerald_grad)" stroke-width="20" opacity="0.75"/>
+  
+  <!-- Vertical Meridians -->
+  <ellipse cx="256" cy="256" rx="100" ry="210" stroke="url(#emerald_grad)" stroke-width="20" opacity="0.85"/>
+  <ellipse cx="256" cy="256" rx="210" ry="100" stroke="url(#emerald_grad)" stroke-width="20" opacity="0.45"/>
+  
+  <!-- Gold Accent Continents / Arcs -->
+  <path d="M 150 90 C 200 60, 310 60, 370 100 C 410 130, 440 180, 430 230" stroke="url(#gold_grad)" stroke-width="24" stroke-linecap="round"/>
+  <path d="M 82 320 C 110 410, 180 465, 270 465 C 350 465, 420 415, 442 345" stroke="url(#gold_grad)" stroke-width="24" stroke-linecap="round"/>
+  
+  <!-- Center Code Bracket Badge </> -->
+  <!-- < -->
+  <path d="M 180 256 L 120 206 L 180 156" stroke="#10B981" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- / -->
+  <path d="M 285 140 L 227 372" stroke="#F59E0B" stroke-width="28" stroke-linecap="round"/>
+  <!-- > -->
+  <path d="M 332 156 L 392 206 L 332 256" stroke="#10B981" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Definitions for Gradients -->
+  <defs>
+    <linearGradient id="emerald_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    
+    <linearGradient id="gold_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+</svg>

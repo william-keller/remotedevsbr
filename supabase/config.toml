@@ -1,0 +1,59 @@
+# Project ref used for local `supabase start` stack naming.
+# Do NOT commit a real production ref here. Create a gitignored
+# supabase/config.local.toml with `project_id = "your-ref"` (from the
+# Supabase dashboard project settings) if you want local overrides.
+project_id = "your-project-ref"
+
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.stripe-portal]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.process-engagement-emails]
+verify_jwt = true
+
+[functions.ai-tools]
+verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = true
+
+[functions.analyze-resume]
+verify_jwt = false
+
+[functions.fetch-og]
+verify_jwt = false
+
+[functions.cover-letter]
+verify_jwt = false
+
+[functions.recruiter-candidate]
+verify_jwt = true
+
+[functions.delete-user]
+verify_jwt = true
+
+[functions.jobs-write]
+verify_jwt = true
+
+[functions.mock-interview-checkout]
+verify_jwt = true
+
+[functions.recruiter-interest]
+verify_jwt = true
+
+[functions.recruiter-search]
+verify_jwt = true
+
+[functions.stripe-recruiter-checkout]
+verify_jwt = true
+
+[functions.track-activity]
+verify_jwt = true

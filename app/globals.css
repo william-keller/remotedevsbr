@@ -1,0 +1,140 @@
+@import "tailwindcss";
+@config "./tailwind.config.ts";
+
+/*
+  RemoteDevs BR - design system
+  Editorial dark-first portal. Warm gold accent (BR sun) + electric green (signal of "go").
+  All colors HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 40 33% 97%;
+    --foreground: 220 30% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 10%;
+
+    --primary: 142 72% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 142 80% 50%;
+
+    --secondary: 220 25% 14%;
+    --secondary-foreground: 40 33% 97%;
+
+    --muted: 40 15% 92%;
+    --muted-foreground: 220 12% 38%;
+
+    --accent: 42 95% 55%;
+    --accent-foreground: 220 30% 10%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --gold: 42 95% 55%;
+    --gold-foreground: 220 30% 10%;
+
+    --success: 142 72% 35%;
+    --warning: 38 92% 50%;
+    --danger: 0 75% 50%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 142 72% 35%;
+
+    --radius: 0.75rem;
+
+    --gradient-hero: linear-gradient(135deg, hsl(220 30% 8%) 0%, hsl(220 35% 14%) 50%, hsl(142 50% 18%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(42 95% 55%), hsl(35 90% 50%));
+    --gradient-go: linear-gradient(135deg, hsl(142 72% 35%), hsl(142 80% 50%));
+    --shadow-elegant: 0 20px 60px -20px hsl(220 30% 10% / 0.25);
+    --shadow-glow: 0 0 60px hsl(142 80% 50% / 0.25);
+
+    --sidebar-background: 220 30% 10%;
+    --sidebar-foreground: 40 33% 97%;
+    --sidebar-primary: 142 72% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 30% 16%;
+    --sidebar-accent-foreground: 40 33% 97%;
+    --sidebar-border: 220 25% 18%;
+    --sidebar-ring: 142 72% 35%;
+  }
+
+  .dark {
+    --background: 220 30% 7%;
+    --foreground: 40 33% 96%;
+
+    --card: 220 30% 10%;
+    --card-foreground: 40 33% 96%;
+
+    --popover: 220 30% 10%;
+    --popover-foreground: 40 33% 96%;
+
+    --primary: 142 80% 50%;
+    --primary-foreground: 220 30% 7%;
+    --primary-glow: 142 90% 60%;
+
+    --secondary: 220 25% 16%;
+    --secondary-foreground: 40 33% 96%;
+
+    --muted: 220 25% 14%;
+    --muted-foreground: 220 12% 65%;
+
+    --accent: 42 95% 60%;
+    --accent-foreground: 220 30% 7%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --gold: 42 95% 60%;
+    --gold-foreground: 220 30% 7%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 142 80% 50%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(220 30% 5%) 0%, hsl(220 35% 10%) 55%, hsl(142 60% 14%) 100%);
+    --shadow-elegant: 0 20px 60px -20px hsl(0 0% 0% / 0.55);
+    --shadow-glow: 0 0 70px hsl(142 80% 50% / 0.35);
+
+    --sidebar-background: 220 30% 5%;
+    --sidebar-foreground: 40 33% 96%;
+    --sidebar-primary: 142 80% 50%;
+    --sidebar-primary-foreground: 220 30% 7%;
+    --sidebar-accent: 220 30% 12%;
+    --sidebar-accent-foreground: 40 33% 96%;
+    --sidebar-border: 220 25% 14%;
+    --sidebar-ring: 142 80% 50%;
+  }
+}
+
+@layer base {
+  * { border-color: hsl(var(--border)); }
+  html { font-family: 'Inter', system-ui, sans-serif; }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    @apply antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .gradient-hero { background: var(--gradient-hero); }
+  .gradient-gold { background: var(--gradient-gold); }
+  .gradient-go { background: var(--gradient-go); }
+  .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .text-gold { color: hsl(var(--gold)); }
+  .bg-gold { background-color: hsl(var(--gold)); }
+  .border-gold { border-color: hsl(var(--gold)); }
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+}
