@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
 
     // ---------- ACTION: analyze (creates a partial analysis) ----------
     if (action === "analyze") {
-      const rl = await enforceRateLimit(req, "resume-analyze", 3, 60 * 60 * 1000, supabase);
+      const rl = await enforceRateLimit(req, "resume-analyze", 10, 60 * 60 * 1000, supabase);
       if (!rl.allowed) return json({ error: rl.error }, rl.status);
 
       const { file_base64, file_name, resume_text, user_id, target_role } = body;
@@ -120,7 +120,7 @@ Be candid but constructive.${roleHint ? " Weight role_fit against the target rol
 
     // ---------- ACTION: unlock (email gate → full report) ----------
     if (action === "unlock") {
-      const rl = await enforceRateLimit(req, "resume-unlock", 5, 60 * 60 * 1000, supabase);
+      const rl = await enforceRateLimit(req, "resume-unlock", 20, 60 * 60 * 1000, supabase);
       if (!rl.allowed) return json({ error: rl.error }, rl.status);
 
       const { id, email } = body;
