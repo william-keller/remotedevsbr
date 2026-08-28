@@ -64,7 +64,7 @@ function json(data: unknown, status: number) {
 }
 
 async function runAI(system: string, user: string) {
-  const ai = await callOpenAIRoute(system, user, { model: "google/gemini-2.5-flash", json: true });
+  const ai = await callOpenAIRoute(system, user, { model: "google/gemma-4-31b-it:free", json: true });
   if (!ai.ok) {
     return { error: ai.error, status: ai.status };
   }
