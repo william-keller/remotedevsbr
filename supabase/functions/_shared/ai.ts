@@ -2,7 +2,7 @@
 // Provider-agnostic: any compatible endpoint works. Set OPENAI_API_KEY and,
 // optionally, OPENAI_BASE_URL (defaults to OpenRouter).
 export interface CallAIOptions {
-  model: string;
+  models: string[];
   json?: boolean;
 }
 
@@ -14,6 +14,16 @@ const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 const APP_TITLE = "RemoteDevsBR";
 const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_ATTEMPTS = 3;
+
+// Ordered best to worst capability, each on a distinct provider pool where
+// possible so a saturated pool falls through to the next model.
+export const FREE_MODELS: string[] = [
+  "z-ai/glm-5.2:free",
+  "minimax/minimax-m3:free",
+  "minimax/minimax-m2.7:free",
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+];
 
 export async function callAI(
   system: string,
@@ -34,7 +44,6 @@ export async function callAI(
   headers["X-Title"] = APP_TITLE;
 
   const body: Record<string, unknown> = {
-    model: opts.model,
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
@@ -42,26 +51,31 @@ export async function callAI(
   };
   if (opts.json) body.response_format = { type: "json_object" };
 
-  const resp = await callWithRetry(body, headers, baseUrl);
+  for (const model of opts.models) {
+    const resp = await postWithRetry(model, body, headers, baseUrl);
 
-  if (resp.status === 429) {
-    return { ok: false, error: "Rate limit reached, try again in a moment.", status: 429 };
-  }
-  if (resp.status === 402) {
-    return { ok: false, error: "AI credits exhausted, add credits to continue.", status: 402 };
-  }
-  if (!resp.ok) {
-    const detail = await resp.text();
-    console.error("chat completions error", resp.status, detail);
-    return { ok: false, error: "AI request failed", status: 500 };
+    if (resp.status === 429 || resp.status >= 500) {
+      continue;
+    }
+    if (resp.status === 402) {
+      return { ok: false, error: "AI credits exhausted, add credits to continue.", status: 402 };
+    }
+    if (!resp.ok) {
+      const detail = await resp.text();
+      console.error("chat completions error", resp.status, detail);
+      return { ok: false, error: "AI request failed", status: 500 };
+    }
+
+    const data = await resp.json();
+    const text = data?.choices?.[0]?.message?.content ?? "";
+    return { ok: true, text };
   }
 
-  const data = await resp.json();
-  const text = data?.choices?.[0]?.message?.content ?? "";
-  return { ok: true, text };
+  return { ok: false, error: "Rate limit reached, try again in a moment.", status: 429 };
 }
 
-async function callWithRetry(
+async function postWithRetry(
+  model: string,
   body: Record<string, unknown>,
   headers: Record<string, string>,
   baseUrl: string
@@ -71,7 +85,7 @@ async function callWithRetry(
     resp = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers,
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, model }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const transient = resp.status === 429 || resp.status >= 500;

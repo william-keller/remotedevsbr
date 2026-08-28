@@ -1,6 +1,6 @@
 // AI tools edge function - resume builder + LinkedIn tuner.
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
-import { callAI } from "../_shared/ai.ts";
+import { callAI, FREE_MODELS } from "../_shared/ai.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -36,7 +36,7 @@ Current about:
 ${payload.about || ""}`;
     }
 
-    const ai = await callAI(system, user, { model: "google/gemma-4-31b-it:free" });
+    const ai = await callAI(system, user, { models: FREE_MODELS });
     if (!ai.ok) {
       return new Response(JSON.stringify({ error: ai.error }), { status: ai.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

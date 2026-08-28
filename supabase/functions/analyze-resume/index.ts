@@ -3,7 +3,7 @@
 // JWT-based identity binding when a session is present, and input/email validation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { enforceRateLimit } from "../_shared/rate_limit.ts";
-import { callAI } from "../_shared/ai.ts";
+import { callAI, FREE_MODELS } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
 - quick_win (one sentence: highest-impact fix)
 Be candid but constructive.${roleHint ? " Weight role_fit against the target role provided." : " If no target role, score role_fit based on general US remote tech market fit."}`,
         userPayload,
-        { model: "google/gemma-4-31b-it:free", json: true },
+        { models: FREE_MODELS, json: true },
       );
       if (!ai.ok) return json({ error: ai.error }, ai.status);
       let partial: any = {};
@@ -149,7 +149,7 @@ Be candid but constructive.${roleHint ? " Weight role_fit against the target rol
 - role_fit_summary (2 sentences on fit for target role, or general US remote fit if none)
 - category_scores (same 6 ids as partial: ats, keywords, formatting, impact, english, role_fit - refine scores with tips)`,
           fullPayload,
-          { model: "google/gemma-4-31b-it:free", json: true },
+          { models: FREE_MODELS, json: true },
         );
         if (!ai.ok) return json({ error: ai.error }, ai.status);
         try { full = JSON.parse(ai.text); } catch { full = { raw: ai.text }; }
