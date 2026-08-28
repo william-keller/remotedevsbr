@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === "generate") {
-      const rl = await enforceRateLimit(req, "cover-generate", 5, 60 * 60 * 1000, supabase);
+      const rl = await enforceRateLimit(req, "cover-generate", 10, 60 * 60 * 1000, supabase);
       if (!rl.allowed) return json({ error: rl.error }, rl.status);
 
       const {
@@ -207,7 +207,7 @@ ${resume.slice(0, 12000)}`;
     }
 
     if (action === "unlock") {
-      const rl = await enforceRateLimit(req, "cover-unlock", 5, 60 * 60 * 1000, supabase);
+      const rl = await enforceRateLimit(req, "cover-unlock", 20, 60 * 60 * 1000, supabase);
       if (!rl.allowed) return json({ error: rl.error }, rl.status);
 
       const { id, email } = body;
@@ -223,7 +223,7 @@ ${resume.slice(0, 12000)}`;
     }
 
     if (action === "analyze-letter") {
-      const rl = await enforceRateLimit(req, "cover-analyze-letter", 10, 60 * 60 * 1000, supabase);
+      const rl = await enforceRateLimit(req, "cover-analyze-letter", 20, 60 * 60 * 1000, supabase);
       if (!rl.allowed) return json({ error: rl.error }, rl.status);
 
       const { job_description, target_role, cover_letter, language = "en" } = body;

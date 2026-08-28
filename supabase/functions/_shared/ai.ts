@@ -13,6 +13,7 @@ export type CallAIResult =
 const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 const APP_TITLE = "RemoteDevsBR";
 const REQUEST_TIMEOUT_MS = 60_000;
+const MAX_ATTEMPTS = 3;
 
 export async function callAI(
   system: string,
@@ -41,12 +42,7 @@ export async function callAI(
   };
   if (opts.json) body.response_format = { type: "json_object" };
 
-  const resp = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
+  const resp = await callWithRetry(body, headers, baseUrl);
 
   if (resp.status === 429) {
     return { ok: false, error: "Rate limit reached, try again in a moment.", status: 429 };
@@ -63,4 +59,25 @@ export async function callAI(
   const data = await resp.json();
   const text = data?.choices?.[0]?.message?.content ?? "";
   return { ok: true, text };
+}
+
+async function callWithRetry(
+  body: Record<string, unknown>,
+  headers: Record<string, string>,
+  baseUrl: string
+): Promise<Response> {
+  let resp: Response | undefined;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    resp = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    const transient = resp.status === 429 || resp.status >= 500;
+    if (!transient || attempt === MAX_ATTEMPTS) break;
+    await new Promise((r) => setTimeout(r, 750 * attempt));
+  }
+  if (!resp) throw new Error("AI request failed to start");
+  return resp;
 }
