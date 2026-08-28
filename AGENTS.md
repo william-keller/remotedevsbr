@@ -15,9 +15,9 @@ The core growth engine for the platform. Developers upload a PDF, we extract the
 
 **Location:** `supabase/functions/analyze-resume/`
 
-**Provider:** Lovable AI Gateway (`https://ai.gateway.lovable.dev`)
+**Provider:** OpenAI-compatible chat completions endpoint via `_shared/ai.ts` (defaults to OpenRouter at `https://openrouter.ai/api/v1`). Configured with the `OPENAI_API_KEY` and optional `OPENAI_BASE_URL` edge secrets.
 
-**Model Choice (current):** Google Gemini Flash via gateway (currently configured as `google/gemini-2.5-flash` in code).
+**Model Choice (current):** Google Gemini Flash via OpenRouter. `google/gemini-2.5-flash` for analyze-resume and cover-letter; `google/gemini-3-flash-preview` for ai-tools.
 * **Why Flash?** Speed and cost-efficiency. Resume analysis requires reading ~1,000-2,000 tokens of raw text and generating a few hundred tokens of structured JSON.
 
 **Token Flow:**
@@ -36,7 +36,7 @@ We use a zero-shot prompt with strict JSON schema enforcement to ensure the outp
 
 Because the Resume Analyzer is a **Free Tool** used to drive top-of-funnel acquisition, managing token costs is paramount.
 
-* **Cost Optimization:** We use a Flash-tier model via the Lovable AI Gateway to keep latency and per-request costs low. Avoid hardcoding cost-per-resume assumptions in product logic; treat pricing as a deploy-time/config concern that can change with provider/model.
+* **Cost Optimization:** We use a Flash-tier model via OpenRouter to keep latency and per-request costs low. Avoid hardcoding cost-per-resume assumptions in product logic; treat pricing as a deploy-time/config concern that can change with provider/model.
 * **Gate Strategy:** While the compute is free, the *value* of the full report is high. We present the user with the partial analysis (`overall_score` + `top_strengths`), but require them to create an account and complete their profile to unlock the `detailed_feedback`. This converts cheap LLM tokens into high-value structured profile data.
 
 ## 3. Future Agent: Recruiter Matchmaker (Phase 6)
@@ -58,7 +58,7 @@ The upcoming Phase 6 of the strategic sequence involves building an AI-driven ma
 
 ## 4. Edge Function Security & Best Practices
 
-* **No direct client-to-LLM calls:** All AI requests route through Supabase Edge Functions. The `GEMINI_API_KEY` is securely stored in Supabase Vault/Secrets and is never exposed to the frontend.
+* **No direct client-to-LLM calls:** All AI requests route through Supabase Edge Functions. The `OPENAI_API_KEY` is securely stored in Supabase Vault/Secrets and is never exposed to the frontend.
 * **Rate Limiting:** We currently rate-limit resume uploads per anonymous session to prevent abuse of the API key.
 * **JSON Validation:** LLM responses are parsed and sanitized before being inserted into the `resume_analyses` table to prevent injection or schema-breaking errors on the frontend.
 
@@ -86,8 +86,8 @@ This serves as a quick-reference map for all major touchpoints within the archit
 * `/recruiter/pricing` - Stripe checkout for Professional/Enterprise tiers.
 
 ### Supabase Edge Functions (API)
-* `analyze-resume` (POST) - Takes a PDF or text, extracts text if needed, calls the Lovable AI Gateway (Gemini Flash), stores `resume_analyses`, and returns partial + gated full report.
-* `ai-tools` (POST) - Resume builder + LinkedIn tuner via Lovable AI Gateway (currently configured as `google/gemini-3-flash-preview`).
+* `analyze-resume` (POST) - Takes a PDF or text, extracts text if needed, calls the shared OpenAI-compatible helper (Gemini Flash via OpenRouter), stores `resume_analyses`, and returns partial + gated full report.
+* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (currently configured as `google/gemini-3-flash-preview`).
 * `track-activity` (POST) - Logs user actions, updates daily streaks, and checks for newly unlocked achievements.
 * `process-engagement-emails` (CRON) - Background job that emails users about lost streaks or incomplete profiles.
 * `recruiter-search` (POST) - Queries the `profiles` table. Returns full or obfuscated (blurred) data depending on the recruiter's subscription tier.

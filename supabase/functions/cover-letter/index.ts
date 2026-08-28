@@ -3,6 +3,7 @@
 // rate limiting, JWT-based identity binding when a session is present, and validation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { enforceRateLimit } from "../_shared/rate_limit.ts";
+import { callAI as callOpenAIRoute } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +14,6 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -63,32 +63,12 @@ function json(data: unknown, status: number) {
   });
 }
 
-async function callAI(system: string, user: string) {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (resp.status === 429) {
-    return { error: "Rate limit reached, try again in a moment.", status: 429 };
+async function runAI(system: string, user: string) {
+  const ai = await callOpenAIRoute(system, user, { model: "google/gemini-2.5-flash", json: true });
+  if (!ai.ok) {
+    return { error: ai.error, status: ai.status };
   }
-  if (resp.status === 402) {
-    return { error: "AI credits exhausted.", status: 402 };
-  }
-  if (!resp.ok) {
-    const t = await resp.text();
-    console.error("AI error", resp.status, t);
-    return { error: "AI gateway error", status: 500 };
-  }
-  const data = await resp.json();
-  const raw = data?.choices?.[0]?.message?.content ?? "{}";
+  const raw = ai.text ?? "{}";
   try {
     return { data: JSON.parse(raw) };
   } catch {
@@ -100,7 +80,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
     const body = await req.json();
     const { action } = body;
@@ -166,7 +145,7 @@ ${jd.slice(0, 8000)}
 --- CANDIDATE RESUME / EXPERIENCE ---
 ${resume.slice(0, 12000)}`;
 
-      const ai = await callAI(system, user);
+      const ai = await runAI(system, user);
       if (ai.error) {
         return json({ error: ai.error }, ai.status ?? 500);
       }
@@ -277,7 +256,7 @@ ${jd.slice(0, 8000)}
 --- COVER LETTER TO REVIEW ---
 ${letterText.slice(0, 6000)}`;
 
-      const ai = await callAI(system, userPrompt);
+      const ai = await runAI(system, userPrompt);
       if (ai.error) {
         return json({ error: ai.error }, ai.status ?? 500);
       }

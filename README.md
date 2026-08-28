@@ -83,7 +83,7 @@ supabase functions deploy cover-letter
 Set function secrets (required for AI and payments):
 
 ```bash
-supabase secrets set LOVABLE_API_KEY=... STRIPE_SECRET_KEY=... TELEGRAM_BOT_TOKEN=...
+supabase secrets set OPENAI_API_KEY=... STRIPE_SECRET_KEY=... TELEGRAM_BOT_TOKEN=...
 ```
 
 Hosted Supabase injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` at runtime; for local runs the CLI provides them too. CRON functions (e.g. `process-engagement-emails`) are scheduled from the Supabase dashboard.
@@ -109,7 +109,8 @@ Hosted Supabase injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVI
 | `SUPABASE_URL` | all functions | Yes, injected by Supabase |
 | `SUPABASE_ANON_KEY` | authenticated functions | Yes, injected by Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | server-side data access | Yes, injected by Supabase |
-| `LOVABLE_API_KEY` | `analyze-resume`, `cover-letter`, `ai-tools` | For AI tools |
+| `OPENAI_API_KEY` | `analyze-resume`, `cover-letter`, `ai-tools` | For AI tools |
+| `OPENAI_BASE_URL` | `analyze-resume`, `cover-letter`, `ai-tools` | Optional, defaults to `https://openrouter.ai/api/v1` |
 | `STRIPE_SECRET_KEY` | `stripe-*` functions, `check-subscription` | For payments |
 | `STRIPE_WEBHOOK_SECRET` | `stripe-webhook` | For payments |
 | `TELEGRAM_BOT_TOKEN` | `send-notification` | For notifications |

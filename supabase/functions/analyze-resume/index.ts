@@ -3,6 +3,7 @@
 // JWT-based identity binding when a session is present, and input/email validation.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { enforceRateLimit } from "../_shared/rate_limit.ts";
+import { callAI } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +14,6 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,27 +29,6 @@ async function extractPdfText(bytes: Uint8Array): Promise<string> {
     console.error("pdf-parse failed", e);
     return "";
   }
-}
-
-async function callAI(system: string, user: string, json = true) {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      ...(json ? { response_format: { type: "json_object" } } : {}),
-    }),
-  });
-  if (!resp.ok) {
-    const t = await resp.text();
-    throw new Error(`AI ${resp.status}: ${t}`);
-  }
-  const data = await resp.json();
-  return data?.choices?.[0]?.message?.content ?? "";
 }
 
 // Returns the authenticated user's id from the request JWT, or null for anonymous callers.
@@ -104,7 +83,7 @@ Deno.serve(async (req) => {
         ? `Target role for this evaluation: ${roleHint}\n\n--- RESUME ---\n${text}`
         : text;
 
-      const partialJson = await callAI(
+      const ai = await callAI(
         `You are a senior tech recruiter evaluating Brazilian developers for US remote roles (ATS + human review). Return STRICT JSON with:
 - overall_score (0-100 integer)
 - english_signal ("low"|"medium"|"high")
@@ -117,9 +96,11 @@ Deno.serve(async (req) => {
 - quick_win (one sentence: highest-impact fix)
 Be candid but constructive.${roleHint ? " Weight role_fit against the target role provided." : " If no target role, score role_fit based on general US remote tech market fit."}`,
         userPayload,
+        { model: "google/gemini-2.5-flash", json: true },
       );
+      if (!ai.ok) return json({ error: ai.error }, ai.status);
       let partial: any = {};
-      try { partial = JSON.parse(partialJson); } catch { partial = { raw: partialJson }; }
+      try { partial = JSON.parse(ai.text); } catch { partial = { raw: ai.text }; }
 
       if (roleHint) partial.target_role = roleHint;
 
@@ -152,7 +133,7 @@ Be candid but constructive.${roleHint ? " Weight role_fit against the target rol
         const fullPayload = partialRole
           ? `Target role: ${partialRole}\n\n--- RESUME ---\n${row.resume_text ?? ""}`
           : (row.resume_text ?? "");
-        const fullJson = await callAI(
+        const ai = await callAI(
           `You are a senior tech recruiter and career coach for Brazilian devs targeting US remote roles. Produce STRICT JSON with:
 - ats_score (0-100)
 - readiness_summary (2-3 sentences)
@@ -165,8 +146,10 @@ Be candid but constructive.${roleHint ? " Weight role_fit against the target rol
 - role_fit_summary (2 sentences on fit for target role, or general US remote fit if none)
 - category_scores (same 6 ids as partial: ats, keywords, formatting, impact, english, role_fit - refine scores with tips)`,
           fullPayload,
+          { model: "google/gemini-2.5-flash", json: true },
         );
-        try { full = JSON.parse(fullJson); } catch { full = { raw: fullJson }; }
+        if (!ai.ok) return json({ error: ai.error }, ai.status);
+        try { full = JSON.parse(ai.text); } catch { full = { raw: ai.text }; }
       }
 
       await supabase.from("resume_analyses").update({
