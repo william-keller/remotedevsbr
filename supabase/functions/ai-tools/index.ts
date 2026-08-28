@@ -36,7 +36,7 @@ Current about:
 ${payload.about || ""}`;
     }
 
-    const ai = await callAI(system, user, { model: "google/gemma-4-31b-it:free" });
+    const ai = await callAI(system, user, { models: ["google/gemma-4-31b-it:free", "minimax/minimax-m3:free"] });
     if (!ai.ok) {
       return new Response(JSON.stringify({ error: ai.error }), { status: ai.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

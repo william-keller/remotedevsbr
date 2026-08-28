@@ -17,8 +17,8 @@ The core growth engine for the platform. Developers upload a PDF, we extract the
 
 **Provider:** OpenAI-compatible chat completions endpoint via `_shared/ai.ts` (defaults to OpenRouter at `https://openrouter.ai/api/v1`). Configured with the `OPENAI_API_KEY` and optional `OPENAI_BASE_URL` edge secrets.
 
-**Model Choice (current):** Google Gemma 4 via OpenRouter's free tier. `google/gemma-4-31b-it:free` for analyze-resume, cover-letter, and ai-tools.
-* **Why free tier?** Zero cost while the account carries no OpenRouter credits. Resume analysis requires reading ~1,000-2,000 tokens of raw text and generating a few hundred tokens of structured JSON. Free-tier `:free` models impose daily request limits and lower rate limits; revisit paid Flash-tier models if they start throttling or quality regresses.
+**Model Choice (current):** Free-tier OpenRouter models with ordered fallback. Each AI tool passes `models: ["google/gemma-4-31b-it:free", "minimax/minimax-m3:free"]`; on HTTP 429/5xx the shared client (`_shared/ai.ts`) retries with backoff, then falls through to the next model (each free model maps to a different provider pool, so a saturated pool does not block the tools).
+* **Why free tier?** Zero cost while the account carries no OpenRouter credits. Resume analysis requires reading ~1,000-2,000 tokens of raw text and generating a few hundred tokens of structured JSON. Free-tier `:free` models impose daily request limits, lower rate limits, and can be temporarily saturated upstream; revisit paid Flash-tier models if throttling or quality regresses.
 
 **Token Flow:**
 1. **Input (Prompt + Payload):** ~1,500 - 3,000 tokens depending on resume length.
@@ -87,7 +87,7 @@ This serves as a quick-reference map for all major touchpoints within the archit
 
 ### Supabase Edge Functions (API)
 * `analyze-resume` (POST) - Takes a PDF or text, extracts text if needed, calls the shared OpenAI-compatible helper (Gemini Flash via OpenRouter), stores `resume_analyses`, and returns partial + gated full report.
-* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (currently configured as `google/gemma-4-31b-it:free`).
+* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (currently `google/gemma-4-31b-it:free` with `minimax/minimax-m3:free` fallback).
 * `track-activity` (POST) - Logs user actions, updates daily streaks, and checks for newly unlocked achievements.
 * `process-engagement-emails` (CRON) - Background job that emails users about lost streaks or incomplete profiles.
 * `recruiter-search` (POST) - Queries the `profiles` table. Returns full or obfuscated (blurred) data depending on the recruiter's subscription tier.
