@@ -183,7 +183,7 @@ const dicts: Record<Locale, Dict> = {
     "invoice.invoiceNumber": "Número da fatura",
     "invoice.currency": "Moeda",
     "invoice.date": "Data",
-    "invoice.datePlaceholder": "May 1, 2026",
+    "invoice.datePlaceholder": "1 de maio de 2026",
     "invoice.paymentTerms": "Condições de pagamento",
     "invoice.paymentTermsPlaceholder": "Condições de pagamento",
     "invoice.dueDate": "Data de vencimento",
@@ -216,6 +216,7 @@ const dicts: Record<Locale, Dict> = {
     "invoice.autoIncrement": "Incrementar número da fatura",
     "invoice.autoDownload": "Baixar automaticamente ao gerar",
     "invoice.generateNext": "Gerar Próxima Fatura",
+    "invoice.updated": "atualizado",
     "privacy.title": "Política de Privacidade",
     "privacy.desc": "Leia nossa Política de Privacidade para entender como coletamos, usamos e protegemos seus dados pessoais de acordo com a LGPD.",
     "privacy.introTitle": "1. Introdução",
@@ -864,6 +865,7 @@ const dicts: Record<Locale, Dict> = {
     "invoice.autoIncrement": "Auto-increment invoice number",
     "invoice.autoDownload": "Auto-download on generation",
     "invoice.generateNext": "Generate Next Invoice",
+    "invoice.updated": "updated",
     "privacy.title": "Privacy Policy",
     "privacy.desc": "Read our Privacy Policy to understand how we collect, use, and protect your personal data in accordance with LGPD.",
     "privacy.introTitle": "1. Introduction",
@@ -1304,6 +1306,35 @@ const dicts: Record<Locale, Dict> = {
   },
 };
 
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === " ") c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
+function setCookie(name: string, value: string, days = 365) {
+  if (typeof document === "undefined") return;
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+}
+
+function detectBrowserLocale(): Locale {
+  if (typeof navigator === "undefined") return "pt";
+  const nav = navigator.language || navigator.languages?.[0] || "";
+  return nav.toLowerCase().startsWith("en") ? "en" : "pt";
+}
+
 interface I18nContextValue {
   locale: Locale;
   setLocale: (l: Locale) => void;
@@ -1312,20 +1343,35 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | undefined>(undefined);
 
+function readInitialLocale(): Locale {
+  if (typeof window === "undefined") return "pt";
+  const cookieLocale = getCookie("locale") as Locale | null;
+  if (cookieLocale && (cookieLocale === "pt" || cookieLocale === "en")) return cookieLocale;
+  const stored = localStorage.getItem("locale") as Locale | null;
+  if (stored && (stored === "pt" || stored === "en")) return stored;
+  return detectBrowserLocale();
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    const stored = typeof window !== "undefined" ? (localStorage.getItem("locale") as Locale | null) : null;
-    return stored ?? "pt";
-  });
+  const [locale, setLocaleState] = useState<Locale>(readInitialLocale);
+
+  const setLocale = (l: Locale) => {
+    setLocaleState(l);
+    if (typeof window === "undefined") return;
+    localStorage.setItem("locale", l);
+    setCookie("locale", l);
+  };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     localStorage.setItem("locale", locale);
+    setCookie("locale", locale);
     document.documentElement.lang = locale === "pt" ? "pt-BR" : "en";
   }, [locale]);
 
   const t = (key: string) => dicts[locale][key] ?? key;
   return (
-    <I18nContext.Provider value={{ locale, setLocale: setLocaleState, t }}>
+    <I18nContext.Provider value={{ locale, setLocale, t }}>
       {children}
     </I18nContext.Provider>
   );

@@ -37,6 +37,13 @@ interface InvoicePreviewProps {
 
 const mapLocale = (locale: string) => (locale === "pt" ? "pt-BR" : "en-US");
 
+const formatDate = (isoDate: string | undefined, locale: string) => {
+  if (!isoDate) return "";
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString(mapLocale(locale), { month: "long", day: "numeric", year: "numeric" });
+};
+
 export const SUPPORTED_INVOICE_CURRENCIES = ["BRL", "USD", "EUR"] as const;
 export type InvoiceCurrency = (typeof SUPPORTED_INVOICE_CURRENCIES)[number];
 
@@ -84,12 +91,12 @@ export function InvoicePreview({ data, t, locale, isPrint = false }: InvoicePrev
   useEffect(() => {
     if (isPrint) {
       const originalTitle = document.title;
-      document.title = `Invoice ${data.invoiceNumber || "1"}`;
+      document.title = `${t("invoice.title")} ${data.invoiceNumber || "1"}`;
       return () => {
         document.title = originalTitle;
       };
     }
-  }, [isPrint, data.invoiceNumber]);
+  }, [isPrint, data.invoiceNumber, t]);
 
   return (
     <div className="bg-white text-black w-full max-w-[900px] mx-auto rounded-xl border border-zinc-200 p-8 shadow-sm invoice-preview-root">
@@ -148,7 +155,7 @@ export function InvoicePreview({ data, t, locale, isPrint = false }: InvoicePrev
             {!shouldHideField(data.date, t("invoice.datePlaceholder"), isPrint) && (
               <div className="grid grid-cols-[1fr_auto] gap-5">
                 <span className="text-zinc-500">{t("invoice.date")}:</span>
-                <span>{getFieldValue(data.date, t("invoice.datePlaceholder"), isPrint)}</span>
+                <span>{formatDate(data.rawDate, locale) || data.date}</span>
               </div>
             )}
             {!shouldHideField(data.paymentTerms, t("invoice.paymentTermsPlaceholder"), isPrint) && (
@@ -160,7 +167,7 @@ export function InvoicePreview({ data, t, locale, isPrint = false }: InvoicePrev
             {!shouldHideField(data.dueDate, t("invoice.datePlaceholder"), isPrint) && (
               <div className="grid grid-cols-[1fr_auto] gap-5">
                 <span className="text-zinc-500">{t("invoice.dueDate")}:</span>
-                <span>{getFieldValue(data.dueDate, t("invoice.datePlaceholder"), isPrint)}</span>
+                <span>{formatDate(data.rawDueDate, locale) || data.dueDate}</span>
               </div>
             )}
             {!shouldHideField(data.poNumber, t("invoice.poNumberPlaceholder"), isPrint) && (
