@@ -75,7 +75,6 @@ Deno.serve(async (req) => {
           name: payload.companyName.trim(),
           slug: toSlug(payload.companyName.trim()),
           website: payload.companyWebsite ?? null,
-          list_type: "golden",
           hiring: true,
         },
         { onConflict: "slug" },

@@ -5,22 +5,18 @@ import { AppLayout } from "@/components/Layout";
 import { useI18n, pickLocaleField } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { ChevronUp, ExternalLink, Award, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
+import { ChevronUp, ExternalLink, Building2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { useAuthModal } from "@/lib/auth-modal";
 
 function CompanyCard({ c, voted, onVote }: { c: any; voted: boolean; onVote: () => void }) {
   const { locale } = useI18n();
-  const golden = c.list_type === "golden";
   return (
-    <div className={`rounded-xl border p-5 bg-card ${golden ? "border-gold/30" : "border-destructive/30"}`}>
+    <div className="rounded-xl border p-5 bg-card">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`h-10 w-10 rounded-lg inline-flex items-center justify-center ${golden ? "bg-gold/15 text-gold" : "bg-destructive/10 text-destructive"}`}>
-            {golden ? <Award className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+          <div className="h-10 w-10 rounded-lg inline-flex items-center justify-center bg-muted text-muted-foreground">
+            <Building2 className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold truncate">{c.name}</h3>
@@ -70,13 +66,10 @@ export default function Companies() {
     load();
   };
 
-  const golden = items.filter(c => c.list_type === "golden");
-  const black = items.filter(c => c.list_type === "black");
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "itemListElement": golden.slice(0, 20).map((c, i) => ({
+    "itemListElement": items.slice(0, 20).map((c, i) => ({
       "@type": "ListItem",
       "position": i + 1,
       "item": {
@@ -98,24 +91,11 @@ export default function Companies() {
       />
       <div className="container py-10">
         <h1 className="text-4xl font-bold">{t("nav.companies")}</h1>
-        <p className="text-muted-foreground mt-2 mb-6">Lista dourada e lista negra - votada pela comunidade.</p>
+        <p className="text-muted-foreground mt-2 mb-6">{t("companies.subtitle")}</p>
 
-        <Tabs defaultValue="golden">
-          <TabsList>
-            <TabsTrigger value="golden"><Award className="h-3 w-3 mr-1" />Golden ({golden.length})</TabsTrigger>
-            <TabsTrigger value="black"><AlertTriangle className="h-3 w-3 mr-1" />Black ({black.length})</TabsTrigger>
-          </TabsList>
-          <TabsContent value="golden" className="mt-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              {golden.map(c => <CompanyCard key={c.id} c={c} voted={votes.has(c.id)} onVote={() => toggle(c.id)} />)}
-            </div>
-          </TabsContent>
-          <TabsContent value="black" className="mt-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              {black.map(c => <CompanyCard key={c.id} c={c} voted={votes.has(c.id)} onVote={() => toggle(c.id)} />)}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="grid md:grid-cols-2 gap-4">
+          {items.map(c => <CompanyCard key={c.id} c={c} voted={votes.has(c.id)} onVote={() => toggle(c.id)} />)}
+        </div>
       </div>
     </AppLayout>
   );

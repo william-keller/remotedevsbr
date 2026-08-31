@@ -58,7 +58,6 @@ function CrudList({ section }: { section: Section }) {
       delete payload.is_pro;
     }
     if (section === "companies") {
-      if (!payload.list_type) payload.list_type = "golden";
       if (!payload.slug && payload.name) {
         payload.slug = payload.name
           .toLowerCase()
@@ -80,7 +79,6 @@ function CrudList({ section }: { section: Section }) {
               name: compName,
               slug: compSlug,
               website: payload.company_website || null,
-              list_type: "golden",
               hiring: true,
             },
             { onConflict: "slug" }
@@ -191,7 +189,6 @@ function CrudList({ section }: { section: Section }) {
       delete payload.is_pro;
     }
     if (section === "companies") {
-      if (!payload.list_type) payload.list_type = "golden";
       if (!payload.slug && payload.name) {
         payload.slug = payload.name
           .toLowerCase()
@@ -213,7 +210,6 @@ function CrudList({ section }: { section: Section }) {
               name: compName,
               slug: compSlug,
               website: payload.company_website || null,
-              list_type: "golden",
               hiring: true,
             },
             { onConflict: "slug" }
@@ -345,7 +341,7 @@ function CrudList({ section }: { section: Section }) {
       { name: "description", label: "Description" },
     ],
     companies: [
-      { name: "name", label: "Name" }, { name: "list_type", label: "List type", opts: ["golden","black"] },
+      { name: "name", label: "Name" },
       { name: "website", label: "Website" }, { name: "description_pt", label: "Desc PT" }, { name: "description_en", label: "Desc EN" },
     ],
     resources: [
