@@ -140,6 +140,76 @@ export async function notifyMockInterviewPurchased(data: {
   return sendTelegramMessage(message);
 }
 
+export async function notifyJobSubmitted(data: {
+  role: string;
+  companyName: string;
+  location?: string;
+  workFormat?: string;
+  seniority?: string;
+  jobType?: string;
+  salary?: string;
+  stack?: string[];
+  applyUrl?: string;
+  userEmail?: string;
+  userId?: string;
+}) {
+  const role = escapeHtml(data.role);
+  const company = escapeHtml(data.companyName);
+  const location = escapeHtml(data.location || "");
+  const workFormat = escapeHtml(data.workFormat || "");
+  const seniority = escapeHtml(data.seniority || "");
+  const jobType = escapeHtml(data.jobType || "");
+  const salary = escapeHtml(data.salary || "");
+  const stack = Array.isArray(data.stack)
+    ? escapeHtml(data.stack.join(", "))
+    : escapeHtml(String(data.stack || ""));
+  const url = data.applyUrl ? escapeHtml(data.applyUrl) : "";
+  const user = escapeHtml(data.userEmail || data.userId || "Anonymous");
+
+  const message = [
+    `💼 <b>New Job Submitted!</b>`,
+    ``,
+    `📌 <b>Role:</b> ${role}`,
+    `🏢 <b>Company:</b> ${company}`,
+    location ? `📍 <b>Location:</b> ${location}` : null,
+    workFormat ? `🖥 <b>Work format:</b> ${workFormat}` : null,
+    seniority ? `📊 <b>Seniority:</b> ${seniority}` : null,
+    jobType ? `🗓 <b>Type:</b> ${jobType}` : null,
+    salary ? `💰 <b>Salary:</b> ${salary}` : null,
+    stack ? `🛠 <b>Stack:</b> ${stack}` : null,
+    url ? `🔗 <b>Apply URL:</b> ${url}` : null,
+    `👤 <b>Submitted by:</b> ${user}`,
+    `⏳ <b>Status:</b> Pending Approval in Admin Panel`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return sendTelegramMessage(message);
+}
+
+export async function notifyJobRejected(data: {
+  role: string;
+  companyName: string;
+  userEmail?: string;
+  userId?: string;
+}) {
+  const role = escapeHtml(data.role);
+  const company = escapeHtml(data.companyName);
+  const user = escapeHtml(data.userEmail || data.userId || "Anonymous");
+
+  const message = [
+    `❌ <b>Job Submission Rejected</b>`,
+    ``,
+    `📌 <b>Role:</b> ${role}`,
+    `🏢 <b>Company:</b> ${company}`,
+    `👤 <b>Submitted by:</b> ${user}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return sendTelegramMessage(message);
+}
+
 export async function notifyProSubscription(data: {
   userEmail?: string;
   plan?: string;

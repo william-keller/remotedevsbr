@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Plus, ShieldCheck, Pencil, CalendarDays, Clock, Users, Video, CreditCard, Search, UserCheck, X, Loader2, ChevronLeft, ChevronRight, Copy, ExternalLink } from "lucide-react";
+import { Trash2, Plus, ShieldCheck, Pencil, CalendarDays, Clock, Users, Video, CreditCard, Search, UserCheck, X, Check, Loader2, ChevronLeft, ChevronRight, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { RequireAdmin } from "@/components/Guards";
 
@@ -2059,6 +2059,219 @@ function MockInterviewAdmin() {
   );
 }
 
+function JobsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count: number) => void }) {
+  const [filter, setFilter] = useState<"pending" | "published" | "rejected" | "all">("pending");
+  const [items, setItems] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [actioning, setActioning] = useState<string | null>(null);
+
+  const PAGE_SIZE = 20;
+
+  const loadPendingCount = async () => {
+    const { count } = await supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+    const countVal = count ?? 0;
+    setPendingCount(countVal);
+    if (onPendingCountChange) onPendingCountChange(countVal);
+  };
+
+  const loadJobs = async () => {
+    setLoading(true);
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    let query = supabase
+      .from("jobs")
+      .select("*", { count: "exact" })
+      .order("posted_at", { ascending: false });
+
+    if (filter !== "all") {
+      query = query.eq("status", filter as any);
+    }
+
+    if (search.trim()) {
+      query = query.or(`role.ilike.%${search.trim()}%,company_name.ilike.%${search.trim()}%,submitted_by.ilike.%${search.trim()}%`);
+    }
+
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setItems(data ?? []);
+      setTotalCount(count ?? 0);
+    }
+    setLoading(false);
+    loadPendingCount();
+  };
+
+  useEffect(() => {
+    loadJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, page, search]);
+
+  const moderate = async (id: string, action: "approve" | "reject") => {
+    setActioning(id);
+    const { error } = await supabase.functions.invoke("jobs-moderate", {
+      body: { jobId: id, action },
+    });
+    setActioning(null);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(action === "approve" ? "Job approved" : "Job rejected");
+      loadJobs();
+    }
+  };
+
+  const deleteJob = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this job permanently?")) return;
+    const { error } = await supabase.from("jobs").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Job deleted permanently");
+      loadJobs();
+    }
+  };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+        <div>
+          <h2 className="text-2xl font-bold">Jobs Approval</h2>
+          <p className="text-sm text-muted-foreground">
+            Review and moderate community submitted jobs. Pending items require approval before appearing on the public board.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {pendingCount > 0 && (
+            <span className="bg-amber-500/10 text-amber-600 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-semibold">
+              {pendingCount} Pending Approval
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex border rounded-lg p-1 bg-muted/30">
+          {(["pending", "published", "rejected", "all"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => { setFilter(tab); setPage(1); }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition ${
+                filter === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="w-full sm:w-64">
+          <Input
+            placeholder="Search jobs, company, or user ID..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            className="text-xs"
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-12 border rounded-xl bg-card">
+          <p className="text-muted-foreground text-sm">No jobs found for status "{filter}".</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map(j => (
+            <div key={j.id} className="border rounded-xl bg-card p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-base">{j.role}</h3>
+                  <span className="text-sm text-muted-foreground">@ {j.company_name}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize border ${
+                    j.status === "published" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" :
+                    j.status === "rejected" ? "bg-rose-500/10 text-rose-600 border-rose-500/30" :
+                    "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                  }`}>
+                    {j.status}
+                  </span>
+                </div>
+                {j.description && <p className="text-xs text-muted-foreground/80 line-clamp-2">{j.description}</p>}
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {(j.stack ?? []).map((s: string) => (
+                    <span key={s} className="text-[10px] bg-muted px-2 py-0.5 rounded-full">{s}</span>
+                  ))}
+                </div>
+                <div className="text-[11px] text-muted-foreground pt-1 flex items-center gap-3 flex-wrap">
+                  <span>User: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">{j.submitted_by ?? "n/a"}</code></span>
+                  <span>Submitted: {new Date(j.posted_at).toLocaleString()}</span>
+                  {j.location_type && <span>{j.location_type}</span>}
+                  {j.seniority_level && <span>{j.seniority_level}</span>}
+                  {j.salary_min || j.salary_max ? (
+                    <span>{(j.salary_min || "")} - {(j.salary_max || "")} {j.salary_currency}</span>
+                  ) : null}
+                  {j.apply_url && (
+                    <a href={j.apply_url} target="_blank" rel="noreferrer" className="text-primary flex items-center gap-1 hover:underline">
+                      Apply <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                {j.status !== "published" && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={actioning === j.id} onClick={() => moderate(j.id, "approve")}>
+                    {actioning === j.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />} Approve
+                  </Button>
+                )}
+                {j.status !== "rejected" && (
+                  <Button size="sm" variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50" disabled={actioning === j.id} onClick={() => moderate(j.id, "reject")}>
+                    Reject
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => deleteJob(j.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t pt-4">
+          <p className="text-xs text-muted-foreground">
+            Page {page} of {totalPages} ({totalCount} total jobs)
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+            </Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              Next <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProjectsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count: number) => void }) {
   const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const [items, setItems] = useState<any[]>([]);
@@ -2336,6 +2549,7 @@ function ProjectsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count
 
 function Inner() {
   const [pendingProjectsCount, setPendingProjectsCount] = useState(0);
+  const [pendingJobsCount, setPendingJobsCount] = useState(0);
 
   useEffect(() => {
     const fetchPendingProjectsCount = async () => {
@@ -2345,7 +2559,15 @@ function Inner() {
         .eq("status", "pending");
       setPendingProjectsCount(count ?? 0);
     };
+    const fetchPendingJobsCount = async () => {
+      const { count } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      setPendingJobsCount(count ?? 0);
+    };
     fetchPendingProjectsCount();
+    fetchPendingJobsCount();
   }, []);
 
   return (
@@ -2360,7 +2582,14 @@ function Inner() {
         <p className="text-muted-foreground mt-2 mb-8">Manage all platform content and settings.</p>
         <Tabs defaultValue="jobs">
           <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="jobs">Jobs</TabsTrigger>
+            <TabsTrigger value="jobs" className="relative">
+              Jobs
+              {pendingJobsCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-amber-500 text-white rounded-full font-bold">
+                  {pendingJobsCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="companies">Companies</TabsTrigger>
             <TabsTrigger value="projects" className="relative">
               Projects
@@ -2377,9 +2606,12 @@ function Inner() {
             <TabsTrigger value="feature_toggles">Feature Toggles</TabsTrigger>
             <TabsTrigger value="mock_interviews">Mock Interviews</TabsTrigger>
           </TabsList>
-          {(["jobs","companies","resources","classes","help_articles","english_lessons"] as Section[]).map(s => (
+          {(["companies","resources","classes","help_articles","english_lessons"] as Section[]).map(s => (
             <TabsContent key={s} value={s} className="mt-6"><CrudList section={s} /></TabsContent>
           ))}
+          <TabsContent value="jobs" className="mt-6">
+            <JobsAdmin onPendingCountChange={setPendingJobsCount} />
+          </TabsContent>
           <TabsContent value="projects" className="mt-6">
             <ProjectsAdmin onPendingCountChange={setPendingProjectsCount} />
           </TabsContent>

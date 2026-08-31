@@ -25,6 +25,7 @@ type JobPayload = {
   stack?: string[] | null;
   description?: string | null;
   perks?: string[] | null;
+  source?: string | null;
   isFeatured?: boolean;
   isHot?: boolean;
 };
@@ -62,16 +63,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { data: profile } = await adminClient
-      .from("profiles")
-      .select("subscription_status")
-      .eq("id", user.id)
-      .single();
-
-    if (profile?.subscription_status !== "pro") {
-      throw new Error("Only Pro users can publish jobs");
-    }
-
     const payload = (await req.json()) as JobPayload;
     if (!payload.companyName?.trim()) throw new Error("companyName is required");
     if (!payload.role?.trim()) throw new Error("role is required");
@@ -95,9 +86,31 @@ Deno.serve(async (req) => {
     if (companyError) throw companyError;
 
     const slugBase = toSlug(`${payload.role}-${payload.companyName}`);
+
+    // Determine the resulting moderation status. New submissions and resubmits
+    // of pending/rejected jobs stay "pending" for admin review. Edits to an
+    // already-published job (owner correcting an approved listing) stay
+    // "published".
+    let existingStatus: string | null = null;
+    if (payload.jobId) {
+      const { data: existing } = await adminClient
+        .from("jobs")
+        .select("status")
+        .eq("id", payload.jobId)
+        .eq("submitted_by", user.id)
+        .single();
+      existingStatus = existing?.status ?? null;
+    }
+
+    const isEditOfPublished =
+      payload.jobId && (existingStatus === "published" || existingStatus === "archived");
+
+    const jobStatus = isEditOfPublished ? "published" : "pending";
+    const nowIso = new Date().toISOString();
+
     const jobRecord = {
       submitted_by: user.id,
-      source: "member",
+      source: payload.source?.trim() || "member",
       company_id: company.id,
       company_name: payload.companyName.trim(),
       role: payload.role.trim(),
@@ -121,10 +134,10 @@ Deno.serve(async (req) => {
       apply_url: payload.applyUrl.trim(),
       stack: payload.stack ?? null,
       description: payload.description ?? null,
-      status: "published",
-      is_active: true,
-      published_at: new Date().toISOString(),
-      posted_at: new Date().toISOString(),
+      status: jobStatus,
+      is_active: isEditOfPublished,
+      published_at: isEditOfPublished ? (existingStatus === "archived" ? nowIso : undefined) : undefined,
+      posted_at: nowIso,
       is_featured: !!payload.isFeatured,
       is_hot: !!payload.isHot,
     };
@@ -169,6 +182,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         jobId,
+        status: jobStatus,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
