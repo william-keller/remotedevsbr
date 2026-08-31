@@ -242,7 +242,6 @@ export type Database = {
           description_pt: string | null
           hiring: boolean | null
           id: string
-          list_type: Database["public"]["Enums"]["company_list_type"]
           logo_url: string | null
           name: string
           tags: string[] | null
@@ -255,7 +254,6 @@ export type Database = {
           description_pt?: string | null
           hiring?: boolean | null
           id?: string
-          list_type: Database["public"]["Enums"]["company_list_type"]
           logo_url?: string | null
           name: string
           tags?: string[] | null
@@ -268,7 +266,6 @@ export type Database = {
           description_pt?: string | null
           hiring?: boolean | null
           id?: string
-          list_type?: Database["public"]["Enums"]["company_list_type"]
           logo_url?: string | null
           name?: string
           tags?: string[] | null
@@ -1413,7 +1410,6 @@ export type Database = {
         | "interviewing"
         | "offer"
         | "rejected"
-      company_list_type: "golden" | "black"
       job_seniority:
         | "intern"
         | "junior"
@@ -1569,7 +1565,6 @@ export const Constants = {
         "offer",
         "rejected",
       ],
-      company_list_type: ["golden", "black"],
       job_seniority: [
         "intern",
         "junior",
