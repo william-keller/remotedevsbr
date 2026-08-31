@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, Eye, Flame, Plus, MapPin, DollarSign, Sparkles, Send, Check } from "lucide-react";
+import { ExternalLink, Eye, Flame, Plus, MapPin, DollarSign, Send, Check, Loader2, Wand2, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,6 +48,7 @@ type JobRow = {
   job_type: string | null;
   country_codes: string[] | null;
   company_id: string | null;
+  status?: string | null;
   companies?: { name: string; slug: string | null; logo_url: string | null } | null;
   job_perk_map?: { job_perks: { slug: string; label: string } | null }[];
 };
@@ -55,7 +56,7 @@ type JobRow = {
 type Perk = { id: string; slug: string; label: string };
 
 function JobsInner() {
-  const { user, isPro } = useAuth();
+  const { user } = useAuth();
   const { t } = useI18n();
   const { openAuthModal } = useAuthModal();
   const router = useRouter();
@@ -89,7 +90,13 @@ function JobsInner() {
     salary_period: "year",
     description: "",
     perks: [] as string[],
+    source: "",
   });
+
+  // Fill-in-from-link (fetch-og) + "Your Submissions"
+  const [fetchingOg, setFetchingOg] = useState(false);
+  const [mySubmissions, setMySubmissions] = useState<JobRow[]>([]);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -134,6 +141,65 @@ function JobsInner() {
   useEffect(() => {
     loadTrackedJobs();
   }, [user]);
+
+  const loadMySubmissions = async () => {
+    if (!user) {
+      setMySubmissions([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("jobs")
+      .select("id,slug,company_name,role,location,location_type,seniority_level,stack,salary_min,salary_max,salary_currency,posted_at,apply_url,source,views_count,applications_count,benefits_count,is_hot,is_featured,region_scope,description,job_type,country_codes,company_id,status")
+      .eq("submitted_by", user.id)
+      .neq("status", "published")
+      .order("posted_at", { ascending: false });
+    setMySubmissions((data as unknown as JobRow[]) ?? []);
+  };
+
+  useEffect(() => {
+    loadMySubmissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const fillFromLink = async () => {
+    if (!form.apply_url?.trim()) return;
+    setFetchingOg(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-og", {
+        body: { url: form.apply_url.trim() },
+      });
+      if (error) throw error;
+      const og = data as { title?: string; description?: string; siteName?: string };
+      const urlObj = (() => {
+        try { return new URL(form.apply_url.trim()); } catch { return null; }
+      })();
+      const host = urlObj?.hostname?.replace(/^www\./, "") ?? "";
+      setForm((prev) => ({
+        ...prev,
+        role: prev.role || og?.title || prev.role,
+        description: prev.description || og?.description || prev.description,
+        company_name: prev.company_name || og?.siteName || (host ? host.split(".")[0] : "") || prev.company_name,
+        company_website: prev.company_website || (urlObj ? urlObj.origin : "") || prev.company_website,
+      }));
+    } catch (e) {
+      toast.error(t("jobs.post.fillFailed"));
+    } finally {
+      setFetchingOg(false);
+    }
+  };
+
+  const deleteMySubmission = async (id: string) => {
+    if (!user) return;
+    if (!confirm(t("jobs.confirmDelete"))) return;
+    const { error } = await supabase.from("jobs").delete().eq("id", id).eq("submitted_by", user.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(t("jobs.deleted"));
+      loadMySubmissions();
+    }
+  };
+
 
   useEffect(() => {
     const qParam = searchParams.get("q") ?? "";
@@ -227,8 +293,9 @@ function JobsInner() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.functions.invoke("jobs-write", {
+    const { data: writeData, error } = await supabase.functions.invoke("jobs-write", {
       body: {
+        jobId: editingJobId || undefined,
         companyName: form.company_name,
         companyWebsite: form.company_website || null,
         role: form.role,
@@ -247,14 +314,44 @@ function JobsInner() {
         salaryCurrency: form.salary_currency || "USD",
         salaryPeriod: form.salary_period || "year",
         description: form.description || null,
+        source: form.source || null,
         perks: form.perks,
       },
     });
     setSubmitting(false);
     if (error) toast.error(error.message);
     else {
-      toast.success(t("jobs.post.success"));
+      const resultingStatus = (writeData as { status?: string } | null)?.status;
+      const isPending = resultingStatus !== "published";
+      toast.success(isPending ? t("jobs.post.pendingSuccess") : t("jobs.post.success"));
+
+      if (isPending && user) {
+        // Notify admins via Telegram + in-app notifications
+        supabase.functions.invoke("send-notification", {
+          body: {
+            type: "job_submitted",
+            user_id: user.id,
+            payload: {
+              role: form.role,
+              companyName: form.company_name,
+              location: form.location,
+              workFormat: form.location_type,
+              seniority: form.seniority_level,
+              jobType: form.job_type,
+              salary: form.salary_min || form.salary_max
+                ? `${form.salary_min || ""} - ${form.salary_max || ""} ${form.salary_currency} / ${form.salary_period}`.trim()
+                : undefined,
+              stack: form.stack ? form.stack.split(",").map((s) => s.trim()).filter(Boolean) : [],
+              applyUrl: form.apply_url,
+              user_email: user.email,
+              user_id: user.id,
+            },
+          },
+        }).catch((e) => console.error("Failed to send job notification:", e));
+      }
+
       setOpen(false);
+      setEditingJobId(null);
       setForm({
         company_name: "",
         company_website: "",
@@ -272,9 +369,11 @@ function JobsInner() {
         salary_currency: "USD",
         salary_period: "year",
         description: "",
+        source: "",
         perks: [],
       });
       load();
+      loadMySubmissions();
     }
   };
 
@@ -321,14 +420,28 @@ function JobsInner() {
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
               <Button asChild variant="outline" size="sm"><Link href="/applications">My tracker</Link></Button>
-              {isPro ? (
-                <Dialog open={open} onOpenChange={setOpen}>
+              {user ? (
+                <Dialog open={open} onOpenChange={(v) => {
+                  if (!v) setEditingJobId(null);
+                  setOpen(v);
+                }}>
                   <DialogTrigger asChild>
                     <Button size="sm" className="gradient-gold text-gold-foreground"><Send className="h-4 w-4 mr-1" />{t("jobs.post.cta")}</Button>
                   </DialogTrigger>
                 <DialogContent className="max-w-lg">
-                  <DialogHeader><DialogTitle>{t("jobs.post.title")}</DialogTitle></DialogHeader>
+                  <DialogHeader><DialogTitle>{editingJobId ? t("jobs.post.editTitle") : t("jobs.post.title")}</DialogTitle></DialogHeader>
+                  <p className="text-xs text-muted-foreground -mt-2">{t("jobs.post.subtitle")}</p>
                   <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                    <div>
+                      <Label>{t("jobs.post.applyUrl")} *</Label>
+                      <div className="flex gap-2">
+                        <Input value={form.apply_url} onChange={e=>setForm({...form, apply_url: e.target.value})} placeholder="https://..." />
+                        <Button type="button" variant="outline" size="sm" onClick={fillFromLink} disabled={fetchingOg || !form.apply_url.trim()} className="shrink-0 gap-1">
+                          {fetchingOg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                          {t("jobs.post.fillFromLink")}
+                        </Button>
+                      </div>
+                    </div>
                     <div>
                       <Label>{t("jobs.post.company")} *</Label>
                       <Input value={form.company_name} onChange={e=>setForm({...form, company_name: e.target.value})} />
@@ -394,7 +507,7 @@ function JobsInner() {
                       </div>
                       <div><Label>{t("jobs.post.countries")}</Label><Input value={form.country_codes} onChange={e=>setForm({...form, country_codes: e.target.value})} placeholder="BR, US, CA" /></div>
                     </div>
-                    <div><Label>{t("jobs.post.applyUrl")} *</Label><Input value={form.apply_url} onChange={e=>setForm({...form, apply_url: e.target.value})} placeholder="https://..." /></div>
+                    <div><Label>{t("jobs.post.source")}</Label><Input value={form.source} onChange={e=>setForm({...form, source: e.target.value})} placeholder="greenhouse (optional)" /></div>
                     <div><Label>{t("jobs.post.stack")}</Label><Input value={form.stack} onChange={e=>setForm({...form, stack: e.target.value})} placeholder="React, Node, AWS" /></div>
                     <div className="grid grid-cols-2 gap-3">
                       <div><Label>{t("jobs.post.salaryMin")}</Label><Input type="number" value={form.salary_min} onChange={e=>setForm({...form, salary_min: e.target.value})} /></div>
@@ -437,18 +550,75 @@ function JobsInner() {
                     </div>
                     <div><Label>{t("jobs.post.description")}</Label><Textarea rows={4} value={form.description} onChange={e=>setForm({...form, description: e.target.value})} /></div>
                     <Button onClick={submit} disabled={submitting} className="w-full gradient-go text-primary-foreground">
-                      {submitting ? t("jobs.post.publishing") : t("jobs.post.publish")}
+                      {submitting ? t("jobs.post.publishing") : t("jobs.post.submitForReview")}
                     </Button>
                   </div>
                 </DialogContent>
               </Dialog>
-              ) : user ? (
-                <Button asChild size="sm" className="gradient-gold text-gold-foreground font-semibold">
-                  <Link href="/pro"><Sparkles className="h-3.5 w-3.5 mr-1" />Pro: postar vagas</Link>
-                </Button>
               ) : null}
             </div>
           </div>
+          {mySubmissions.length > 0 && user && (
+            <div className="mt-4 rounded-lg border bg-card p-4">
+              <h2 className="flex items-center gap-2 text-sm font-semibold mb-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                {t("jobs.yourSubmissions")}
+              </h2>
+              <div className="space-y-2">
+                {mySubmissions.map((job) => (
+                  <div key={job.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{job.role} <span className="text-muted-foreground">@ {job.company_name}</span></div>
+                      {job.status === "pending" ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                          <Clock className="h-3 w-3" /> {t("jobs.pendingApproval")}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs text-red-600">
+                          <Check className="h-3 w-3" /> {t("jobs.rejected")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setForm({
+                            company_name: job.company_name,
+                            company_website: "",
+                            role: job.role,
+                            seniority_level: (job.seniority_level as string) || "mid",
+                            job_type: (job.job_type as string) || "full_time",
+                            location_type: (job.location_type as string) || "remote",
+                            location: job.location || "Remote",
+                            region_scope: (job.region_scope as string) || "worldwide",
+                            country_codes: job.country_codes?.join(", ") || "",
+                            apply_url: job.apply_url,
+                            stack: job.stack?.join(", ") || "",
+                            salary_min: job.salary_min ? String(job.salary_min) : "",
+                            salary_max: job.salary_max ? String(job.salary_max) : "",
+                            salary_currency: job.salary_currency || "USD",
+                            salary_period: "year",
+                            description: job.description || "",
+                            source: job.source || "",
+                            perks: [],
+                          });
+                          setEditingJobId(job.id);
+                          setOpen(true);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />{t("jobs.resubmit")}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => deleteMySubmission(job.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <Input placeholder={t("common.search")} value={q} onChange={e=>setQ(e.target.value)} className="flex-1" />
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>

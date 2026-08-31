@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import {
   notifyProjectSubmitted,
   notifyMockInterviewBooked,
+  notifyJobSubmitted,
 } from "../_shared/telegram.ts";
 
 const corsHeaders = {
@@ -83,6 +84,34 @@ Deno.serve(async (req) => {
           stack: Array.isArray(payload.stack)
             ? payload.stack.filter((s: unknown): s is string => typeof s === "string")
             : undefined,
+          userEmail,
+          userId,
+        });
+        break;
+      }
+
+      case "job_submitted": {
+        if (
+          typeof payload.role !== "string" || !payload.role.trim() ||
+          typeof payload.companyName !== "string" || !payload.companyName.trim()
+        ) {
+          return json({ error: "job_submitted requires payload.role and payload.companyName" }, 400);
+        }
+
+        await admin.from("notifications").insert({ user_id: userId, type, payload });
+
+        await notifyJobSubmitted({
+          role: payload.role,
+          companyName: payload.companyName,
+          location: typeof payload.location === "string" ? payload.location : undefined,
+          workFormat: typeof payload.workFormat === "string" ? payload.workFormat : undefined,
+          seniority: typeof payload.seniority === "string" ? payload.seniority : undefined,
+          jobType: typeof payload.jobType === "string" ? payload.jobType : undefined,
+          salary: typeof payload.salary === "string" ? payload.salary : undefined,
+          stack: Array.isArray(payload.stack)
+            ? payload.stack.filter((s: unknown): s is string => typeof s === "string")
+            : undefined,
+          applyUrl: typeof payload.applyUrl === "string" ? payload.applyUrl : undefined,
           userEmail,
           userId,
         });
