@@ -190,7 +190,7 @@ export default function InvoiceGeneratorPage() {
         toast.error(t("invoice.printError"));
       }
     } else {
-      toast.success(t("invoice.invoiceNumber") + " #" + newInvoiceNumber + " updated");
+      toast.success(t("invoice.invoiceNumber") + " #" + newInvoiceNumber + " " + t("invoice.updated"));
     }
   };
 

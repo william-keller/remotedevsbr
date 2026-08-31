@@ -5,12 +5,44 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { AuthModalProvider } from "@/lib/auth-modal";
 import { AuthModal } from "@/components/AuthModal";
 import { ReactNode, useState, useEffect } from "react";
 import { FeatureTogglesProvider, useFeatureToggles } from "@/lib/feature-toggles";
 
+/**
+ * Syncs the app locale with the signed-in user's Supabase profile. On login it
+ * applies the profile's saved locale (overriding cookie/localStorage), and on
+ * locale change it writes the preference back to the profile so it persists
+ * across devices. Sits inside both I18nProvider and AuthProvider.
+ */
+function LocaleSync({ children }: { children: ReactNode }) {
+  const { user, profile } = useAuth();
+  const { locale, setLocale } = useI18n();
+
+  // Apply the profile's saved locale once it loads, overriding toggled value.
+  useEffect(() => {
+    if (!user || !profile) return;
+    if ((profile.locale === "pt" || profile.locale === "en") && profile.locale !== locale) {
+      setLocale(profile.locale);
+    }
+  }, [user, profile, locale, setLocale]);
+
+  // Write the current locale back to the profile once it has loaded (so the
+  // initial read wins), and only when it differs from the persisted value.
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (profile.locale === locale) return;
+    supabase
+      .from("profiles")
+      .upsert({ id: user.id, locale }, { onConflict: "id" })
+      .then(() => {});
+  }, [locale, user, profile]);
+
+  return <>{children}</>;
+}
 /**
  * Forces locale to "pt" when the "is_english_lang_enabled" feature flag is
  * disabled. Sits inside both I18nProvider and FeatureTogglesProvider so it
@@ -36,6 +68,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <AuthProvider>
+          <LocaleSync>
           <FeatureTogglesProvider>
             <EnglishLangGuard>
               <AuthModalProvider>
@@ -48,6 +81,7 @@ export function Providers({ children }: { children: ReactNode }) {
               </AuthModalProvider>
             </EnglishLangGuard>
           </FeatureTogglesProvider>
+          </LocaleSync>
         </AuthProvider>
       </I18nProvider>
     </QueryClientProvider>
