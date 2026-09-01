@@ -2055,6 +2055,213 @@ function MockInterviewAdmin() {
   );
 }
 
+const JOB_FIELD_DEFS: { name: string; label: string; type?: string; opts?: string[] }[] = [
+  { name: "company_name", label: "Company" },
+  { name: "role", label: "Role" },
+  { name: "seniority_level", label: "Seniority", opts: ["intern", "junior", "mid", "senior", "staff", "principal", "lead"] },
+  { name: "job_type", label: "Job Type", opts: ["full_time", "part_time", "contract", "freelance", "internship"] },
+  { name: "location_type", label: "Location Type", opts: ["remote", "hybrid", "onsite"] },
+  { name: "location", label: "Location" },
+  { name: "region_scope", label: "Region Scope", opts: ["worldwide", "north_america", "latin_america", "europe", "asia"] },
+  { name: "country_codes", label: "Country Codes (comma separated)" },
+  { name: "apply_url", label: "Apply URL" },
+  { name: "stack", label: "Stack (comma separated)" },
+  { name: "salary_min", label: "Salary Min", type: "number" },
+  { name: "salary_max", label: "Salary Max", type: "number" },
+  { name: "salary_currency", label: "Salary Currency" },
+  { name: "salary_period", label: "Salary Period", opts: ["year", "month", "week", "day", "hour"] },
+  { name: "english_level", label: "English Level" },
+  { name: "description", label: "Description" },
+];
+
+function JobEditDialog({ job, onClose, onSaved }: { job: any; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState<any>(() => ({
+    company_name: job.company_name ?? "",
+    role: job.role ?? "",
+    seniority_level: job.seniority_level ?? "",
+    job_type: job.job_type ?? "full_time",
+    location_type: job.location_type ?? "remote",
+    location: job.location ?? "Remote",
+    region_scope: job.region_scope ?? "",
+    country_codes: Array.isArray(job.country_codes) ? job.country_codes.join(", ") : (job.country_codes ?? ""),
+    apply_url: job.apply_url ?? "",
+    stack: Array.isArray(job.stack) ? job.stack.join(", ") : (job.stack ?? ""),
+    salary_min: job.salary_min ?? "",
+    salary_max: job.salary_max ?? "",
+    salary_currency: job.salary_currency ?? "USD",
+    salary_period: job.salary_period ?? "year",
+    english_level: job.english_level ?? "",
+    description: job.description ?? "",
+    status: job.status ?? "published",
+    is_active: job.is_active !== false,
+    is_hot: !!job.is_hot,
+    is_featured: !!job.is_featured,
+    perks: (job.job_perk_map ?? []).map((m: { job_perks?: { slug?: string | null } | null }) => m.job_perks?.slug).filter(Boolean) as string[],
+  }));
+  const [perks, setPerks] = useState<{ id: string; slug: string; label: string }[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supabase.from("job_perks").select("id,slug,label").order("label").then(({ data }) => setPerks(data ?? []));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+
+    let companyId = job.company_id ?? null;
+    if (form.company_name?.trim()) {
+      const compName = form.company_name.trim();
+      const compSlug = compName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80);
+
+      const { data: company, error: compErr } = await (supabase
+        .from("companies") as any)
+        .upsert({ name: compName, slug: compSlug, hiring: true }, { onConflict: "slug" })
+        .select("id")
+        .single();
+      if (compErr) {
+        toast.error("Error upserting company: " + compErr.message);
+        setSaving(false);
+        return;
+      }
+      companyId = company.id;
+    }
+
+    const num = (v: string | number | null | undefined) => v !== "" && v != null ? Number(v) : null;
+    const record: any = {
+      company_id: companyId,
+      company_name: form.company_name?.trim() || "",
+      role: form.role?.trim() || "",
+      title: form.role?.trim() || "",
+      seniority_level: form.seniority_level || null,
+      seniority: form.seniority_level || null,
+      job_type: form.job_type || "full_time",
+      location_type: form.location_type || "remote",
+      location: form.location || "Remote",
+      region_scope: form.region_scope || null,
+      country_codes: form.country_codes ? String(form.country_codes).split(",").map((s: string) => s.trim().toUpperCase()).filter(Boolean) : [],
+      apply_url: form.apply_url?.trim() || "",
+      description: form.description || null,
+      stack: form.stack ? String(form.stack).split(",").map((s: string) => s.trim()).filter(Boolean) : [],
+      salary_min: num(form.salary_min),
+      salary_max: num(form.salary_max),
+      comp_min: num(form.salary_min),
+      comp_max: num(form.salary_max),
+      salary_currency: form.salary_currency || "USD",
+      comp_currency: form.salary_currency || "USD",
+      salary_period: form.salary_period || "year",
+      english_level: form.english_level?.trim() || null,
+      status: form.status || "published",
+      is_active: !!form.is_active,
+      is_hot: !!form.is_hot,
+      is_featured: !!form.is_featured,
+    };
+
+    const { error: jobErr } = await supabase.from("jobs").update(record).eq("id", job.id);
+    setSaving(false);
+    if (jobErr) {
+      toast.error(jobErr.message);
+      return;
+    }
+
+    await supabase.from("job_perk_map").delete().eq("job_id", job.id);
+
+    const perkSlugs = (form.perks ?? []).map((p: string) => p.trim()).filter(Boolean);
+    if (perkSlugs.length > 0) {
+      const { data: perkRows } = await supabase.from("job_perks").select("id, slug").in("slug", perkSlugs);
+      if (perkRows?.length) {
+        await supabase.from("job_perk_map").insert(
+          perkRows.map((perk) => ({ job_id: job.id, perk_id: perk.id }))
+        );
+      }
+    }
+
+    toast.success("Job updated");
+    onSaved();
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Edit Job</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          {JOB_FIELD_DEFS.map(f => (
+            <div key={f.name}>
+              <Label>{f.label}</Label>
+              {f.opts ? (
+                <Select value={form[f.name] ?? ""} onValueChange={v => setForm({ ...form, [f.name]: v })}>
+                  <SelectTrigger><SelectValue placeholder="-" /></SelectTrigger>
+                  <SelectContent>{f.opts.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                </Select>
+              ) : f.name === "description" ? (
+                <Textarea value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} />
+              ) : (
+                <Input type={f.type ?? "text"} value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: f.type === "number" ? (e.target.value === "" ? "" : +e.target.value) : e.target.value })} />
+              )}
+            </div>
+          ))}
+
+          <div>
+            <Label>Status</Label>
+            <Select value={form.status ?? "published"} onValueChange={v => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["published", "pending", "rejected", "archived"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2 border-t pt-2">
+            <div className="flex items-center gap-2">
+              <Switch checked={!!form.is_active} onCheckedChange={v => setForm({ ...form, is_active: v })} />
+              <Label>Active (visible in listing)</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={!!form.is_hot} onCheckedChange={v => setForm({ ...form, is_hot: v })} />
+              <Label>Hot (highlighted)</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={!!form.is_featured} onCheckedChange={v => setForm({ ...form, is_featured: v })} />
+              <Label>Featured</Label>
+            </div>
+          </div>
+
+          {job.external_id ? (
+            <p className="text-xs text-muted-foreground pt-1">
+              This listing is synced from {job.source ?? "Onstrider"} (external id {job.external_id}). Manual edits to source fields such as company, role, salary, and apply URL may be overwritten by the next scrape.
+            </p>
+          ) : null}
+
+          <div>
+            <Label>Perks</Label>
+            <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
+              {perks.map((perk) => (
+                <label key={perk.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={(form.perks ?? []).includes(perk.slug)}
+                    onCheckedChange={(checked) => {
+                      setForm((prev: any) => ({
+                        ...prev,
+                        perks: checked
+                          ? [...(prev.perks ?? []), perk.slug]
+                          : (prev.perks ?? []).filter((slug: string) => slug !== perk.slug),
+                      }));
+                    }}
+                  />
+                  <span>{perk.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <Button onClick={save} disabled={saving} className="w-full">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Save Changes
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function JobsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count: number) => void }) {
   const [filter, setFilter] = useState<"pending" | "published" | "rejected" | "all">("pending");
   const [items, setItems] = useState<any[]>([]);
@@ -2064,6 +2271,7 @@ function JobsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count: nu
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [actioning, setActioning] = useState<string | null>(null);
+  const [editingJob, setEditingJob] = useState<any | null>(null);
 
   const PAGE_SIZE = 20;
 
@@ -2142,11 +2350,19 @@ function JobsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count: nu
 
   return (
     <div className="space-y-6">
+      {editingJob && (
+        <JobEditDialog
+          key={editingJob.id}
+          job={editingJob}
+          onClose={() => setEditingJob(null)}
+          onSaved={() => { setEditingJob(null); loadJobs(); }}
+        />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
         <div>
           <h2 className="text-2xl font-bold">Jobs Approval</h2>
           <p className="text-sm text-muted-foreground">
-            Review and moderate community submitted jobs. Pending items require approval before appearing on the public board.
+            Review and moderate community submitted jobs. Pending items require approval before appearing on the public board. Admins can edit any listing, including scraped ones.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -2230,6 +2446,9 @@ function JobsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count: nu
               </div>
 
               <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                <Button size="sm" variant="outline" onClick={() => setEditingJob(j)}>
+                  <Pencil className="h-4 w-4 mr-1" /> Edit
+                </Button>
                 {j.status !== "published" && (
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={actioning === j.id} onClick={() => moderate(j.id, "approve")}>
                     {actioning === j.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />} Approve
