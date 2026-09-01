@@ -17,6 +17,8 @@ import { enforceRateLimit } from "../_shared/rate_limit.ts";
 
 const SOURCE = "onstrider";
 const DEFAULT_COMPANY = "Onstrider";
+const REFERRER_SLUG = "williamkeller";
+const REFERRER_QUERY = "?referral=william_2mzwlv";
 const CLERK_SIGN_IN_URL = "https://clerk.onstrider.com/v1/client/sign_ins";
 const CLERK_ORIGIN = "https://app.onstrider.com";
 const JOB_LISTINGS_URL =
@@ -152,7 +154,54 @@ function makeSlug(role: string, externalId: string): string {
 // Onstrider API calls
 // ---------------------------------------------------------------------------
 
-async function login(): Promise<string> {
+interface OnstriderSession {
+  jwt: string;
+  cookies: string;
+}
+
+function extractSetCookies(res: Response): string[] {
+  const raw =
+    typeof res.headers.getSetCookie === "function"
+      ? res.headers.getSetCookie()
+      : (res.headers.get("set-cookie") ?? "").split(",");
+
+  return raw
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .map((c) => c.split(";")[0])
+    .filter((c) => c.includes("="));
+}
+
+async function getSessionToken(
+  sessionId: string,
+  clientCookie: string,
+): Promise<string | null> {
+  const url = `https://clerk.onstrider.com/v1/client/sessions/${sessionId}/tokens/token-with-email`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...BROWSER_HEADERS,
+        Cookie: clientCookie,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "",
+    });
+    if (!res.ok) {
+      console.log(
+        `[scrape-onstrider] token-with-email request failed (${res.status}): ${await res.text()}`,
+      );
+      return null;
+    }
+    const data = await res.json();
+    return typeof data?.jwt === "string" && data.jwt ? data.jwt : null;
+  } catch (err: any) {
+    console.warn(`[scrape-onstrider] token-with-email request error: ${err.message}`);
+    return null;
+  }
+}
+
+async function login(): Promise<OnstriderSession> {
   const email = Deno.env.get("ONSTRIDER_EMAIL");
   const password = Deno.env.get("ONSTRIDER_PASSWORD");
   if (!email || !password) {
@@ -183,20 +232,57 @@ async function login(): Promise<string> {
   if (!jwt) {
     throw new Error("Onstrider login succeeded but no session JWT was returned.");
   }
-  return jwt;
+
+  const cookies = extractSetCookies(res);
+
+  // Clerk's BFF flow issues a fresh session token with the email claim
+  // required by Onstrider's API auth. Fetch it via the token-with-email
+  // endpoint (matching the real browser flow) and prefer it over
+  // last_active_token.
+  const clientCookie = cookies.find((c) => c.startsWith("__client=")) ?? "";
+  const sessionId = data?.client?.sessions?.[0]?.id;
+  let authJwt = jwt;
+  if (sessionId && clientCookie) {
+    const freshToken = await getSessionToken(sessionId, clientCookie);
+    if (freshToken) authJwt = freshToken;
+    else console.warn("[scrape-onstrider] token-with-email unavailable; falling back to last_active_token");
+  }
+
+  // Ensure the session JWT is available as the Clerk __session cookie.
+  const hasSessionCookie = cookies.some((c) => c.startsWith("__session="));
+  if (!hasSessionCookie) {
+    cookies.push(`__session=${authJwt}`);
+  }
+  // Referral attribution cookies observed in the working browser request.
+  if (!cookies.some((c) => c.startsWith("referrer_slug="))) {
+    cookies.push(`referrer_slug=${REFERRER_SLUG}`);
+  }
+  if (!cookies.some((c) => c.startsWith("QueryString="))) {
+    cookies.push(`QueryString=${REFERRER_QUERY}`);
+  }
+
+  return { jwt: authJwt, cookies: cookies.join("; ") };
 }
 
-async function fetchJobs(jwt: string): Promise<any[]> {
+async function fetchJobs(session: OnstriderSession): Promise<any[]> {
+  const headers: Record<string, string> = {
+    ...BROWSER_HEADERS,
+  };
+  if (session.jwt) headers.Authorization = `Bearer ${session.jwt}`;
+  if (session.cookies) {
+    headers.Cookie = `${
+      headers.Cookie ? `${headers.Cookie}; ` : ""
+    }${session.cookies}`;
+  }
+
   const res = await fetch(JOB_LISTINGS_URL, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${jwt}`,
-      ...BROWSER_HEADERS,
-    },
+    headers,
   });
 
   if (!res.ok) {
-    throw new Error(`Onstrider job fetch failed (${res.status}): ${await res.text()}`);
+    const body = await res.text();
+    throw new Error(`Onstrider job fetch failed (${res.status}): ${body}`);
   }
 
   const data = await res.json();
@@ -337,8 +423,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const jwt = await login();
-    const items = await fetchJobs(jwt);
+    const session = await login();
+    const items = await fetchJobs(session);
     const result = await syncJobs(client, items);
 
     try {
