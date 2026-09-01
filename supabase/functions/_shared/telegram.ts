@@ -248,3 +248,33 @@ export async function notifyRecruiterInterest(data: {
 
   return sendTelegramMessage(message);
 }
+
+export async function notifyOnstriderScrape(data: {
+  inserted: number;
+  updated: number;
+  deactivated: number;
+  fetched: number;
+}) {
+  const message = [
+    `🔄 <b>Onstrider Scrape Complete</b>`,
+    ``,
+    `📥 <b>Fetched:</b> ${data.fetched}`,
+    `✅ <b>Inserted:</b> ${data.inserted}`,
+    `🔄 <b>Updated:</b> ${data.updated}`,
+    `⏸ <b>Deactivated:</b> ${data.deactivated}`,
+  ].join("\n");
+
+  return sendTelegramMessage(message);
+}
+
+export async function notifyOnstriderScrapeFailed(error: string) {
+  const msg = escapeHtml(error || "Unknown error");
+
+  const message = [
+    `⚠️ <b>Onstrider Scrape Failed</b>`,
+    ``,
+    `🛑 <b>Error:</b> ${msg}`,
+  ].join("\n");
+
+  return sendTelegramMessage(message);
+}

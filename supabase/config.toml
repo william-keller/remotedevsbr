@@ -19,6 +19,9 @@ verify_jwt = true
 [functions.process-engagement-emails]
 verify_jwt = true
 
+[functions.scrape-onstrider]
+verify_jwt = true
+
 [functions.ai-tools]
 verify_jwt = true
 
