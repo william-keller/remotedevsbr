@@ -416,6 +416,8 @@ export type Database = {
           created_at: string
           country_codes: string[] | null
           description: string | null
+          english_level: string | null
+          external_id: string | null
           id: string
           is_active: boolean
           is_featured: boolean
@@ -456,6 +458,8 @@ export type Database = {
           created_at?: string
           country_codes?: string[] | null
           description?: string | null
+          english_level?: string | null
+          external_id?: string | null
           id?: string
           is_active?: boolean
           is_featured?: boolean
@@ -496,6 +500,8 @@ export type Database = {
           created_at?: string
           country_codes?: string[] | null
           description?: string | null
+          english_level?: string | null
+          external_id?: string | null
           id?: string
           is_active?: boolean
           is_featured?: boolean
