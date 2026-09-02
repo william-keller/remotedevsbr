@@ -186,6 +186,7 @@ export function Footer() {
     { href: "/projects", key: "nav.projects", toggleKey: "navbar-show-projects" },
     { href: "/help", key: "nav.help", toggleKey: "navbar-show-help" },
     { href: "/pro", key: "nav.upgrade" },
+    { href: "/analytics", label: "Open / metrics" },
   ];
 
   const visibleCoreLinks = coreLinks.filter(link => !link.toggleKey || isEnabled(link.toggleKey));
@@ -226,7 +227,7 @@ export function Footer() {
                   href={link.href}
                   className="rounded-md px-2 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 >
-                  {t(link.key)}
+                  {"label" in link ? link.label : t(link.key)}
                 </Link>
               ))}
             </nav>
