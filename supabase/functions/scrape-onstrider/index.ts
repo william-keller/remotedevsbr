@@ -448,6 +448,11 @@ async function syncJobs(
     if (!externalId) continue;
     seenExternal.add(externalId);
 
+    // The detail endpoint is keyed on the listing's `externalId`, which is a
+    // separate UUID from `item.id`. `item.id` stays the DB `external_id`
+    // (dedup key); `item.externalId` is what the detail fetch requires.
+    const detailId = item?.externalId ?? externalId;
+
     const title = (item.title ?? "").trim();
     if (!title) continue;
 
@@ -488,7 +493,7 @@ async function syncJobs(
 
     let record = base;
     if (needsDetail) {
-      record = await buildDetailRecord(session, externalId, base);
+      record = await buildDetailRecord(session, detailId, base);
       await sleep(200);
     }
 
