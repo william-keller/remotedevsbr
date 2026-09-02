@@ -419,6 +419,7 @@ export type Database = {
           english_level: string | null
           external_id: string | null
           id: string
+          industry: string | null
           is_active: boolean
           is_featured: boolean
           is_hot: boolean
@@ -430,6 +431,7 @@ export type Database = {
           published_at: string | null
           region_scope: string | null
           role: string
+          role_category: string | null
           salary_currency: string | null
           salary_max: number | null
           salary_min: number | null
@@ -461,6 +463,7 @@ export type Database = {
           english_level?: string | null
           external_id?: string | null
           id?: string
+          industry?: string | null
           is_active?: boolean
           is_featured?: boolean
           is_hot?: boolean
@@ -472,6 +475,7 @@ export type Database = {
           published_at?: string | null
           region_scope?: string | null
           role: string
+          role_category?: string | null
           salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
@@ -503,6 +507,7 @@ export type Database = {
           english_level?: string | null
           external_id?: string | null
           id?: string
+          industry?: string | null
           is_active?: boolean
           is_featured?: boolean
           is_hot?: boolean
@@ -514,6 +519,7 @@ export type Database = {
           published_at?: string | null
           region_scope?: string | null
           role?: string
+          role_category?: string | null
           salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null

@@ -23,6 +23,8 @@ const CLERK_SIGN_IN_URL = "https://clerk.onstrider.com/v1/client/sign_ins";
 const CLERK_ORIGIN = "https://app.onstrider.com";
 const JOB_LISTINGS_URL =
   "https://app.onstrider.com/api/referrals/job-listings?status=Active";
+const JOB_DETAIL_URL =
+  "https://app.onstrider.com/api/referrals/job-listings/";
 
 const BROWSER_HEADERS = {
   Origin: CLERK_ORIGIN,
@@ -143,6 +145,10 @@ function toSlug(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
     .slice(0, 80);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function makeSlug(role: string, externalId: string): string {
@@ -289,25 +295,140 @@ async function fetchJobs(session: OnstriderSession): Promise<any[]> {
   return Array.isArray(data?.items) ? data.items : [];
 }
 
+async function fetchJobDetail(
+  session: OnstriderSession,
+  externalId: string,
+): Promise<any | null> {
+  const headers: Record<string, string> = {
+    ...BROWSER_HEADERS,
+  };
+  if (session.jwt) headers.Authorization = `Bearer ${session.jwt}`;
+  if (session.cookies) {
+    headers.Cookie = `${
+      headers.Cookie ? `${headers.Cookie}; ` : ""
+    }${session.cookies}`;
+  }
+
+  const res = await fetch(`${JOB_DETAIL_URL}${externalId}`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res.ok) {
+    console.warn(
+      `[scrape-onstrider] job detail fetch failed (${res.status}) for ${externalId}: ${await res.text()}`,
+    );
+    return null;
+  }
+
+  return await res.json();
+}
+
+async function buildDetailRecord(
+  session: OnstriderSession,
+  externalId: string,
+  base: any,
+): Promise<any> {
+  const detail = await fetchJobDetail(session, externalId);
+  if (!detail) return base;
+
+  const descriptionParts = [
+    (detail.projectDescription ?? "").trim(),
+    (detail.detailedRequirements ?? "").trim(),
+    (detail.extraQualifications ?? "").trim(),
+  ].filter(Boolean);
+  const description = descriptionParts.length > 0
+    ? descriptionParts.join("\n\n")
+    : null;
+
+  const detailSalary = parseSalary(detail.compensationLabel);
+  const detailStack = Array.isArray(detail.requiredSkills) && detail.requiredSkills.length > 0
+    ? (detail.requiredSkills as { label?: string }[]).map((s) => (s?.label ?? "").trim()).filter(Boolean)
+    : Array.isArray(detail.indispensableSkills) && detail.indispensableSkills.length > 0
+      ? (detail.indispensableSkills as { label?: string }[]).map((s) => (s?.label ?? "").trim()).filter(Boolean)
+      : base.stack;
+
+  const priority = (detail.priority ?? "").trim().toLowerCase() === "high";
+
+  let roleCategory: string | null = null;
+  if (typeof detail.role === "string" && detail.role.trim()) {
+    roleCategory = detail.role.trim();
+  }
+
+  let location: string | null = null;
+  if (typeof detail.location === "string" && detail.location.trim()) {
+    location = detail.location.trim();
+  }
+
+  let countryCodes: string[] | null = null;
+  if (Array.isArray(detail.countries) && detail.countries.length > 0) {
+    countryCodes = (detail.countries as string[])
+      .map((c) => (typeof c === "string" ? c.trim().toUpperCase() : ""))
+      .filter(Boolean);
+  }
+
+  let companySize: string | null = null;
+  if (typeof detail.companySize === "string" && detail.companySize.trim()) {
+    companySize = detail.companySize.trim();
+  }
+
+  let industry: string | null = null;
+  if (typeof detail.industry === "string" && detail.industry.trim()) {
+    industry = detail.industry.trim();
+  }
+
+  return {
+    ...base,
+    description: description ?? base.description,
+    location: location ?? base.location,
+    country_codes: countryCodes ?? base.country_codes,
+    company_size: companySize ?? base.company_size,
+    industry: industry ?? base.industry,
+    role_category: roleCategory ?? base.role_category,
+    stack: detailStack.length > 0 ? detailStack : base.stack,
+    salary_min: detailSalary.salaryMin ?? base.salary_min,
+    salary_max: detailSalary.salaryMax ?? base.salary_max,
+    salary_currency: detailSalary.salaryCurrency ?? base.salary_currency,
+    salary_period: detailSalary.salaryPeriod ?? base.salary_period,
+    comp_min: detailSalary.salaryMin ?? base.comp_min,
+    comp_max: detailSalary.salaryMax ?? base.comp_max,
+    comp_currency: detailSalary.salaryCurrency ?? base.comp_currency,
+    is_hot: priority || base.is_hot,
+  };
+}
+
+function detailMissing(row: { description: string | null; country_codes: string[] | null; location: string | null; company_size: string | null; industry: string | null; role_category: string | null }): boolean {
+  return !row.description &&
+    !(Array.isArray(row.country_codes) && row.country_codes.length > 0) &&
+    !row.location &&
+    !row.company_size &&
+    !row.industry &&
+    !row.role_category;
+}
+
 // ---------------------------------------------------------------------------
 // Sync
 // ---------------------------------------------------------------------------
 
 async function syncJobs(
   client: any,
+  session: OnstriderSession,
   items: any[],
 ): Promise<{ inserted: number; updated: number; deactivated: number; fetched: number }> {
   const fetched = items.length;
 
   const { data: existingRows, error: selectError } = await client
     .from("jobs")
-    .select("id, external_id, posted_at")
+    .select("id, external_id, posted_at, description, country_codes, location, company_size, industry, role_category")
     .eq("source", SOURCE)
     .not("external_id", "is", null);
 
   if (selectError) throw selectError;
 
-  const existingByExternal: Record<string, { id: string; posted_at: string }> = {};
+  const existingByExternal: Record<
+    string,
+    { id: string; posted_at: string; description: string | null; country_codes: string[] | null; location: string | null; company_size: string | null; industry: string | null; role_category: string | null }
+  > = {};
   for (const row of existingRows ?? []) {
     if (row.external_id) existingByExternal[row.external_id] = row;
   }
@@ -359,17 +480,24 @@ async function syncJobs(
     } as const;
 
     const existing = existingByExternal[externalId];
+    const needsDetail = !existing || detailMissing(existing);
+
+    let record = base;
+    if (needsDetail) {
+      record = await buildDetailRecord(session, externalId, base);
+      await sleep(200);
+    }
 
     if (existing) {
       const { error: updateError } = await client
         .from("jobs")
-        .update(base)
+        .update(record)
         .eq("id", existing.id);
       if (updateError) throw updateError;
       updated += 1;
     } else {
       const { error: insertError } = await client.from("jobs").insert({
-        ...base,
+        ...record,
         slug: makeSlug(title, externalId),
         status: "published",
         is_active: true,
@@ -425,7 +553,7 @@ Deno.serve(async (req) => {
 
     const session = await login();
     const items = await fetchJobs(session);
-    const result = await syncJobs(client, items);
+    const result = await syncJobs(client, session, items);
 
     try {
       await notifyOnstriderScrape(result);
