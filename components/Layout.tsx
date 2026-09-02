@@ -21,6 +21,7 @@ import { StreakCounter } from "@/components/StreakCounter";
 import { CookieBanner } from "@/components/CookieBanner";
 import { SecurityBadges } from "@/components/SecurityBadges";
 import { useFeatureToggles } from "@/lib/feature-toggles";
+import { GitHubBadge } from "@/components/GitHubBadge";
 
 export function LangToggle() {
   const { locale, setLocale } = useI18n();
@@ -95,6 +96,7 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <GitHubBadge />
           {user ? (
             <>
               <div className="hidden md:block">
