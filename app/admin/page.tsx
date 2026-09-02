@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2, Plus, ShieldCheck, Pencil, CalendarDays, Clock, Users, Video, CreditCard, Search, UserCheck, X, Check, Loader2, ChevronLeft, ChevronRight, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { RequireAdmin } from "@/components/Guards";
+import { JourneyAdmin } from "./journey-content";
 
 type Section = "jobs" | "companies" | "resources" | "classes" | "help_articles" | "english_lessons";
 
@@ -2820,6 +2821,7 @@ function Inner() {
             <TabsTrigger value="english_lessons">English</TabsTrigger>
             <TabsTrigger value="feature_toggles">Feature Toggles</TabsTrigger>
             <TabsTrigger value="mock_interviews">Mock Interviews</TabsTrigger>
+            <TabsTrigger value="journey">Journey</TabsTrigger>
           </TabsList>
           {(["companies","resources","classes","help_articles","english_lessons"] as Section[]).map(s => (
             <TabsContent key={s} value={s} className="mt-6"><CrudList section={s} /></TabsContent>
@@ -2835,6 +2837,9 @@ function Inner() {
           </TabsContent>
           <TabsContent value="mock_interviews" className="mt-6">
             <MockInterviewAdmin />
+          </TabsContent>
+          <TabsContent value="journey" className="mt-6">
+            <JourneyAdmin />
           </TabsContent>
         </Tabs>
         <p className="text-xs text-muted-foreground mt-8">To become an admin, use the database panel and add a row in <code>user_roles</code> with your user_id and role=admin.</p>
