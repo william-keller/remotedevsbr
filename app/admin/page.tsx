@@ -2227,7 +2227,7 @@ function JobEditDialog({ job, onClose, onSaved }: { job: any; onClose: () => voi
 
           {job.external_id ? (
             <p className="text-xs text-muted-foreground pt-1">
-              This listing is synced from {job.source ?? "Onstrider"} (external id {job.external_id}). Manual edits to source fields such as company, role, salary, and apply URL may be overwritten by the next scrape.
+              This listing is synced from {job.source ?? "Onstrider"} (external id {job.external_id}). Manual edits to source fields such as company, role, salary, apply URL, and hot status may be overwritten by the next scrape.
             </p>
           ) : null}
 

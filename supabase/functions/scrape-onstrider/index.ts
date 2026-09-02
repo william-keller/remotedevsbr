@@ -355,6 +355,7 @@ async function syncJobs(
       comp_currency: salary.salaryCurrency,
       apply_url: (item.referralUrl ?? "").trim(),
       stack: parseStack(item.requiredSkillsLabel),
+      is_hot: (item.priority ?? "").trim().toLowerCase() === "high",
     } as const;
 
     const existing = existingByExternal[externalId];
@@ -375,7 +376,6 @@ async function syncJobs(
         posted_at: nowIso,
         published_at: nowIso,
         is_featured: false,
-        is_hot: false,
         is_verified_company: false,
       });
       if (insertError) throw insertError;
