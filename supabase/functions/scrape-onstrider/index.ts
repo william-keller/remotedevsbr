@@ -398,12 +398,16 @@ async function buildDetailRecord(
 }
 
 function detailMissing(row: { description: string | null; country_codes: string[] | null; location: string | null; company_size: string | null; industry: string | null; role_category: string | null }): boolean {
-  return !row.description &&
-    !(Array.isArray(row.country_codes) && row.country_codes.length > 0) &&
-    !row.location &&
-    !row.company_size &&
-    !row.industry &&
-    !row.role_category;
+  // Re-fetch the job detail whenever the description (the core content field,
+  // and the one users actually see) is missing, or when all the remaining
+  // detail-only enrichment fields are empty. `location` is intentionally
+  // excluded: the base import always defaults it to "Remote", so including it
+  // here would prevent backfilling description on already-imported jobs.
+  return !row.description ||
+    (!(Array.isArray(row.country_codes) && row.country_codes.length > 0) &&
+      !row.company_size &&
+      !row.industry &&
+      !row.role_category);
 }
 
 // ---------------------------------------------------------------------------
