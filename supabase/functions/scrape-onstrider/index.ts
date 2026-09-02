@@ -348,7 +348,7 @@ async function buildDetailRecord(
       ? (detail.indispensableSkills as { label?: string }[]).map((s) => (s?.label ?? "").trim()).filter(Boolean)
       : base.stack;
 
-  const priority = (detail.priority ?? "").trim().toLowerCase() === "high";
+  const priority = ["high", "critical"].includes((detail.priority ?? "").trim().toLowerCase());
 
   let roleCategory: string | null = null;
   if (typeof detail.role === "string" && detail.role.trim()) {
@@ -476,7 +476,7 @@ async function syncJobs(
       comp_currency: salary.salaryCurrency,
       apply_url: (item.referralUrl ?? "").trim(),
       stack: parseStack(item.requiredSkillsLabel),
-      is_hot: (item.priority ?? "").trim().toLowerCase() === "high",
+      is_hot: ["high", "critical"].includes((item.priority ?? "").trim().toLowerCase()),
     } as const;
 
     const existing = existingByExternal[externalId];
