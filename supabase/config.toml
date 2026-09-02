@@ -60,3 +60,6 @@ verify_jwt = true
 
 [functions.track-activity]
 verify_jwt = true
+
+[functions.public-analytics]
+verify_jwt = false
