@@ -92,7 +92,7 @@ function CategoryScoresGrid({
 
 export default function AnalyzeResume() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [targetRole, setTargetRole] = useState("");
   const [pasted, setPasted] = useState("");
@@ -146,6 +146,7 @@ export default function AnalyzeResume() {
         action: "analyze",
         user_id: user?.id ?? null,
         target_role: targetRole.trim() || null,
+        locale,
       };
       if (file) {
         if (file.size > 10 * 1024 * 1024) throw new Error("Max 10MB");
@@ -200,7 +201,7 @@ export default function AnalyzeResume() {
     setUnlocking(true);
     try {
       const { data, error } = await supabase.functions.invoke("analyze-resume", {
-        body: { action: "unlock", id, email },
+        body: { action: "unlock", id, email, locale },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -465,7 +466,7 @@ export default function AnalyzeResume() {
                     <div className="text-xs uppercase tracking-widest text-muted-foreground">{t("analyze.detectedStack")}</div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {partial.detected_stack.map((r, i) => (
-                        <span key={i} className="text-xs rounded-full bg-secondary px-2.5 py-1">{r}</span>
+                        <span key={i} className="text-xs rounded-full bg-secondary text-secondary-foreground px-2.5 py-1">{r}</span>
                       ))}
                     </div>
                   </div>
