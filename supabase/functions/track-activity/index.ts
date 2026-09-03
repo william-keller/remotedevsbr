@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import { notifyOnboardingCompleted } from "../_shared/telegram.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -130,6 +131,15 @@ Deno.serve(async (req) => {
         .from("profiles")
         .update({ xp_points: (profile.xp_points || 0) + newXpEarned })
         .eq("id", user.id);
+    }
+
+    // Notify admin on Telegram once a user completes onboarding
+    if (action === "onboarding_completed") {
+      await notifyOnboardingCompleted({
+        userEmail: user.email ?? undefined,
+        userId: user.id,
+        answers: (metadata?.answers as Record<string, unknown>) ?? {},
+      });
     }
 
     return new Response(JSON.stringify({ 

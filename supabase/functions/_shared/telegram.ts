@@ -278,3 +278,97 @@ export async function notifyOnstriderScrapeFailed(error: string) {
 
   return sendTelegramMessage(message);
 }
+
+const AREA_LABELS: Record<string, string> = {
+  dev: "Desenvolvedor(a)",
+  tech_lead: "Tech Lead",
+  designer_qa: "Designer/QA",
+  data: "Área de Dados",
+  product: "Área de Produto",
+  other_it: "Outros cargos de TI",
+  not_it: "Não trabalho como TI",
+};
+
+const EXPERIENCE_LABELS: Record<string, string> = {
+  lt_1_5: "Até 1 ano e meio",
+  r1_5_2: "De 1 ano e meio a 2 anos",
+  r2_3: "De 2 a 3 anos",
+  r3_5: "De 3 a 5 anos",
+  r5_10: "De 5 a 10 anos",
+  r10_20: "De 10 a 20 anos",
+  gt_20: "Mais de 20 anos",
+};
+
+const INCOME_LABELS: Record<string, string> = {
+  lt_5k: "Até 5k / mês",
+  r5_6_5k: "5k - 6,5k / mês",
+  r6_5_8k: "6,5k - 8k / mês",
+  r8_10k: "8k - 10k / mês",
+  r10_15k: "10k - 15k / mês",
+  r15_20k: "15k - 20k / mês",
+  gt_20k: "Mais de 20k / mês",
+};
+
+const PAIN_LABELS: Record<string, string> = {
+  english: "Inglês",
+  recruiter_contacts: "Receber contatos de recrutadores",
+  find_international_jobs: "Encontrar vagas internacionais",
+  technical_interviews: "Passar nas entrevistas técnicas",
+  other: "Outra dificuldade",
+};
+
+const STAGE_LABELS: Record<string, string> = {
+  not_started_preparing: "Não comecei, quero me preparar agora",
+  searching_need_help: "Buscando vaga, preciso de ajuda",
+  in_market_seeking_better: "No mercado, quero algo melhor",
+  researching_not_priority: "Ainda pesquisando, não é prioridade",
+};
+
+function labelOr(map: Record<string, string>, key: unknown, fallback: string): string {
+  const mapped =
+    typeof key === "string" && key in map ? map[key] : "";
+  const raw = mapped || (typeof key === "string" ? key : "") || fallback;
+  return escapeHtml(raw);
+}
+
+export async function notifyOnboardingCompleted(data: {
+  userEmail?: string;
+  userId?: string;
+  answers?: Record<string, unknown>;
+}) {
+  const a = data.answers ?? {};
+  const user = escapeHtml(data.userEmail || data.userId || "Anonymous");
+
+  const area = labelOr(AREA_LABELS, a.area, "Não informado");
+  const experience = labelOr(EXPERIENCE_LABELS, a.experience_bucket, "Não informado");
+  const income = labelOr(INCOME_LABELS, a.monthly_income_bucket, "Não informado");
+  const pain = labelOr(PAIN_LABELS, a.pain_point, "Não informado");
+  const stage = labelOr(STAGE_LABELS, a.intl_search_stage, "Não informado");
+
+  const areaCustom = typeof a.area_custom === "string" && a.area_custom.trim()
+    ? escapeHtml(a.area_custom.trim())
+    : "";
+  const painCustom = typeof a.pain_point_custom === "string" && a.pain_point_custom.trim()
+    ? escapeHtml(a.pain_point_custom.trim())
+    : "";
+
+  const message = [
+    `🧭 <b>New User Completed Onboarding!</b>`,
+    ``,
+    `👤 <b>User:</b> ${escapeHtml(data.userEmail || "")} (${escapeHtml(data.userId || "")})`,
+    ``,
+    `🎯 <b>Área de atuação:</b> ${area}`,
+    areaCustom ? `    (<i>${areaCustom}</i>)` : null,
+    `⏳ <b>Experiência:</b> ${experience}`,
+    `💰 <b>Ganho médio/mês:</b> ${income}`,
+    `🧩 <b>Maior dificuldade:</b> ${pain}`,
+    painCustom ? `    (<i>${painCustom}</i>)` : null,
+    `📍 <b>Momento da busca:</b> ${stage}`,
+    ``,
+    `👤 <b>Cadastrado como:</b> ${user}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return sendTelegramMessage(message);
+}
