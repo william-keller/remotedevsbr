@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     if (action === "english_checked") achievementsToCheck.push("english_checked");
     if (action === "job_applied") achievementsToCheck.push("first_application");
     if (action === "pro_upgraded") achievementsToCheck.push("pro_member");
+    if (action === "onboarding_completed") achievementsToCheck.push("onboarding_completed");
     if (newStreak >= 7) achievementsToCheck.push("7_day_streak");
 
     let newXpEarned = 0;

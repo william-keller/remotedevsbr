@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Build search query
     let query = adminClient
       .from("profiles")
-      .select("id, full_name, avatar_url, current_job_title, english_level, stack, years_experience, remote_goals")
+      .select("id, full_name, avatar_url, current_job_title, english_level, stack, years_experience, remote_goals, monthly_income_bucket")
       .eq("visible_to_recruiters", true);
 
     if (filters.stack && filters.stack.length > 0) {

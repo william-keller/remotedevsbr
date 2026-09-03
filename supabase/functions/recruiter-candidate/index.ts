@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // Fetch candidate
     const { data: candidate, error } = await adminClient
       .from("profiles")
-      .select("id, full_name, avatar_url, current_job_title, english_level, stack, years_experience, remote_goals, visible_to_recruiters")
+      .select("id, full_name, avatar_url, current_job_title, english_level, stack, years_experience, remote_goals, monthly_income_bucket, visible_to_recruiters")
       .eq("id", candidate_id)
       .eq("visible_to_recruiters", true)
       .single();
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     // Obfuscate for free tier
-    let result = { ...candidate };
+    let result: any = { ...candidate };
     if (plan === "free") {
       result = {
         id: candidate.id,
@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
         stack: candidate.stack,
         years_experience: candidate.years_experience,
         remote_goals: "Upgrade to Professional or Enterprise to unlock contact details, goals, and full profile.",
+        monthly_income_bucket: "Upgrade to Professional or Enterprise to unlock income details.",
         visible_to_recruiters: true,
         is_blurred: true,
       };

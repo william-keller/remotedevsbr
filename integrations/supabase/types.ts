@@ -740,21 +740,29 @@ export type Database = {
       }
       profiles: {
         Row: {
+          area: string | null
+          area_custom: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string
           current_job_title: string | null
           current_streak: number
           english_level: string | null
+          experience_bucket: string | null
           full_name: string | null
           github_url: string | null
           goals: string | null
           id: string
+          intl_search_stage: string | null
           last_activity_at: string | null
           linkedin_url: string | null
           locale: Database["public"]["Enums"]["locale"]
           longest_streak: number
+          monthly_income_bucket: string | null
           onboarded_at: string | null
+          pain_point: string | null
+          pain_point_custom: string | null
+          profile_completeness: number
           remote_goals: string | null
           salary_expectation_usd: number | null
           stack: string[] | null
@@ -765,21 +773,29 @@ export type Database = {
           years_experience: number | null
         }
         Insert: {
+          area?: string | null
+          area_custom?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
           current_job_title?: string | null
           current_streak?: number
           english_level?: string | null
+          experience_bucket?: string | null
           full_name?: string | null
           github_url?: string | null
           goals?: string | null
           id: string
+          intl_search_stage?: string | null
           last_activity_at?: string | null
           linkedin_url?: string | null
           locale?: Database["public"]["Enums"]["locale"]
           longest_streak?: number
+          monthly_income_bucket?: string | null
           onboarded_at?: string | null
+          pain_point?: string | null
+          pain_point_custom?: string | null
+          profile_completeness?: number
           remote_goals?: string | null
           salary_expectation_usd?: number | null
           stack?: string[] | null
@@ -790,21 +806,29 @@ export type Database = {
           years_experience?: number | null
         }
         Update: {
+          area?: string | null
+          area_custom?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
           current_job_title?: string | null
           current_streak?: number
           english_level?: string | null
+          experience_bucket?: string | null
           full_name?: string | null
           github_url?: string | null
           goals?: string | null
           id?: string
+          intl_search_stage?: string | null
           last_activity_at?: string | null
           linkedin_url?: string | null
           locale?: Database["public"]["Enums"]["locale"]
           longest_streak?: number
+          monthly_income_bucket?: string | null
           onboarded_at?: string | null
+          pain_point?: string | null
+          pain_point_custom?: string | null
+          profile_completeness?: number
           remote_goals?: string | null
           salary_expectation_usd?: number | null
           stack?: string[] | null

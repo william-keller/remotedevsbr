@@ -13,6 +13,16 @@ import { toast } from "sonner";
 import { Loader2, ArrowLeft, Send, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+const INCOME_LABELS: Record<string, string> = {
+  lt_5k: "Up to R$5k / month",
+  r5_6_5k: "R$5k - 6.5k / month",
+  r6_5_8k: "R$6.5k - 8k / month",
+  r8_10k: "R$8k - 10k / month",
+  r10_15k: "R$10k - 15k / month",
+  r15_20k: "R$15k - 20k / month",
+  gt_20k: "R$20k+ / month",
+};
+
 export default function RecruiterCandidateView() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -152,6 +162,17 @@ export default function RecruiterCandidateView() {
                         </div>
                     ) : (
                         <p className="text-muted-foreground whitespace-pre-wrap">{candidate.remote_goals || "No goals specified."}</p>
+                    )}
+                </div>
+
+                <div className="bg-card p-6 rounded-xl border space-y-4">
+                    <h2 className="text-xl font-bold">Avg Monthly Income</h2>
+                    {candidate.is_blurred ? (
+                        <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 text-muted-foreground text-sm italic">
+                            {candidate.monthly_income_bucket}
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">{INCOME_LABELS[candidate.monthly_income_bucket] || "Not specified."}</p>
                     )}
                 </div>
             </div>
