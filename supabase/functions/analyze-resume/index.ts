@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
       if (!rl.allowed) return json({ error: rl.error }, rl.status);
 
       const { file_base64, file_name, resume_text, user_id, target_role } = body;
+      const locale = body.locale === "en" ? "en" : "pt";
 
       const authedUserId = await getAuthenticatedUserId(req);
       if (user_id && authedUserId && user_id !== authedUserId) return json({ error: "Forbidden" }, 403);
@@ -129,7 +130,7 @@ RULES:
 - category_scores: array of exactly 6 objects. Each must have "id" (one of "ats","keywords","formatting","impact","english","role_fit"), "score" (integer 0-100), and "tip" (string, max 90 chars)
 - quick_win: one sentence, the highest-impact fix
 ${roleHint ? `Weight role_fit against the target role: "${roleHint}".` : "If no target role is given, score role_fit based on general US remote tech market fit."}
-Be candid but constructive.`;
+Be candid but constructive. All user-facing text fields (top_strengths, top_gaps, suggested_roles, detected_stack, quick_win, and every tip in category_scores) must be written in ${locale === "pt" ? "Brazilian Portuguese (pt-BR)" : "English (en)"}.`;
       const ai = await callAI(analyzePrompt, userPayload, { models: FREE_MODELS, json: true });
       if (!ai.ok) return json({ error: ai.error }, ai.status);
 
@@ -145,6 +146,7 @@ Be candid but constructive.`;
       }
 
       if (roleHint) partial.target_role = roleHint;
+      partial.locale = locale;
 
       const { data: row, error } = await supabase.from("resume_analyses").insert({
         user_id: authedUserId,
@@ -169,6 +171,10 @@ Be candid but constructive.`;
       const { data: row, error } = await supabase.from("resume_analyses").select("*").eq("id", id).maybeSingle();
       if (error || !row) throw new Error("Análise não encontrada");
 
+      const locale = body.locale === "en" || body.locale === "pt"
+        ? body.locale
+        : ((row.partial as { locale?: string })?.locale === "en" ? "en" : "pt");
+
       let full = row.full_report;
       if (!full) {
         const partialRole = (row.partial as { target_role?: string })?.target_role ?? "";
@@ -192,7 +198,8 @@ RULES:
 - risk_flags: array of short strings (red flags for ATS or recruiters)
 - formatting_issues: array of up to 5 strings (layout/structure problems)
 - role_fit_summary: 2 sentences on fit for target role, or general US remote fit if none
-- category_scores: array of exactly 6 objects. Each must have "id" (one of "ats","keywords","formatting","impact","english","role_fit"), "score" (integer 0-100), and "tip" (string, max 90 chars)`;
+- category_scores: array of exactly 6 objects. Each must have "id" (one of "ats","keywords","formatting","impact","english","role_fit"), "score" (integer 0-100), and "tip" (string, max 90 chars)
+All user-facing text fields (readiness_summary, bullet_rewrites, missing_keywords, english_recommendations, 30_day_plan, risk_flags, formatting_issues, role_fit_summary, and every tip in category_scores) must be written in ${locale === "pt" ? "Brazilian Portuguese (pt-BR)" : "English (en)"}.`;
         const ai = await callAI(unlockPrompt, fullPayload, { models: FREE_MODELS, json: true });
         if (!ai.ok) return json({ error: ai.error }, ai.status);
         full = robustJsonParse(ai.text);
