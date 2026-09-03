@@ -17,6 +17,33 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Try to parse JSON from raw text. Falls back to extracting from markdown code fences. */
+function robustJsonParse(text: string): unknown | null {
+  // Attempt 1: direct parse
+  try { return JSON.parse(text); } catch { /* continue */ }
+  // Attempt 2: extract from ```json ... ``` or ``` ... ``` fences
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) {
+    try { return JSON.parse(fenceMatch[1].trim()); } catch { /* continue */ }
+  }
+  // Attempt 3: find first { ... } or [ ... ] block
+  const braceStart = text.indexOf("{");
+  const bracketStart = text.indexOf("[");
+  let start = -1;
+  if (braceStart >= 0 && (bracketStart < 0 || braceStart < bracketStart)) start = braceStart;
+  else if (bracketStart >= 0) start = bracketStart;
+  if (start >= 0) {
+    const sub = text.slice(start);
+    try { return JSON.parse(sub); } catch { /* give up */ }
+  }
+  return null;
+}
+
+/** Minimal schema check: ensure critical fields exist. */
+function validatePartial(obj: any): boolean {
+  return obj && typeof obj === "object" && typeof obj.overall_score === "number";
+}
+
 async function extractPdfText(bytes: Uint8Array): Promise<string> {
   // Lightweight extraction via npm:pdf-parse (Deno npm specifier)
   try {
@@ -86,24 +113,36 @@ Deno.serve(async (req) => {
         ? `Target role for this evaluation: ${roleHint}\n\n--- RESUME ---\n${text}`
         : text;
 
-      const ai = await callAI(
-        `You are a senior tech recruiter evaluating Brazilian developers for US remote roles (ATS + human review). Return STRICT JSON with:
-- overall_score (0-100 integer)
-- english_signal ("low"|"medium"|"high")
-- seniority_guess ("junior"|"mid"|"senior"|"staff")
-- top_strengths (array of 3 short strings)
-- top_gaps (array of 3 short strings)
-- suggested_roles (array of 3 short strings)
-- detected_stack (array of strings)
-- category_scores (array of exactly 6 objects, each: id one of "ats","keywords","formatting","impact","english","role_fit"; score 0-100 integer; tip max 90 chars)
-- quick_win (one sentence: highest-impact fix)
-Be candid but constructive.${roleHint ? " Weight role_fit against the target role provided." : " If no target role, score role_fit based on general US remote tech market fit."}`,
-        userPayload,
-        { models: FREE_MODELS, json: true },
-      );
+      const analyzePrompt = `You are a senior tech recruiter evaluating Brazilian developers for US remote roles (ATS and human review).
+
+TASK: Analyze the resume below and return your evaluation.
+
+RESPONSE FORMAT: Return a single valid JSON object. Do NOT wrap it in markdown code fences. Do NOT include any text before or after the JSON. The JSON must have exactly this structure:
+{"overall_score":<int 0-100>,"english_signal":"low"|"medium"|"high","seniority_guess":"junior"|"mid"|"senior"|"staff","top_strengths":["...","...","..."],"top_gaps":["...","...","..."],"suggested_roles":["...","...","..."],"detected_stack":["..."],"category_scores":[{"id":"ats","score":<int>,"tip":"..."},{"id":"keywords","score":<int>,"tip":"..."},{"id":"formatting","score":<int>,"tip":"..."},{"id":"impact","score":<int>,"tip":"..."},{"id":"english","score":<int>,"tip":"..."},{"id":"role_fit","score":<int>,"tip":"..."}],"quick_win":"..."}
+
+RULES:
+- overall_score: integer 0-100
+- english_signal: exactly one of "low", "medium", "high"
+- seniority_guess: exactly one of "junior", "mid", "senior", "staff"
+- top_strengths, top_gaps, suggested_roles: arrays of exactly 3 strings each
+- detected_stack: array of strings
+- category_scores: array of exactly 6 objects. Each must have "id" (one of "ats","keywords","formatting","impact","english","role_fit"), "score" (integer 0-100), and "tip" (string, max 90 chars)
+- quick_win: one sentence, the highest-impact fix
+${roleHint ? `Weight role_fit against the target role: "${roleHint}".` : "If no target role is given, score role_fit based on general US remote tech market fit."}
+Be candid but constructive.`;
+      const ai = await callAI(analyzePrompt, userPayload, { models: FREE_MODELS, json: true });
       if (!ai.ok) return json({ error: ai.error }, ai.status);
-      let partial: any = {};
-      try { partial = JSON.parse(ai.text); } catch { partial = { raw: ai.text }; }
+
+      let partial: any = robustJsonParse(ai.text);
+      // Retry once if parse failed or schema invalid
+      if (!partial || !validatePartial(partial)) {
+        console.warn("analyze-resume: first parse failed, retrying", ai.text.slice(0, 200));
+        const retry = await callAI(analyzePrompt, userPayload, { models: FREE_MODELS, json: true });
+        if (retry.ok) partial = robustJsonParse(retry.text);
+      }
+      if (!partial || !validatePartial(partial)) {
+        partial = { raw: ai.text, parse_error: "Model did not return valid JSON" };
+      }
 
       if (roleHint) partial.target_role = roleHint;
 
@@ -136,23 +175,34 @@ Be candid but constructive.${roleHint ? " Weight role_fit against the target rol
         const fullPayload = partialRole
           ? `Target role: ${partialRole}\n\n--- RESUME ---\n${row.resume_text ?? ""}`
           : (row.resume_text ?? "");
-        const ai = await callAI(
-          `You are a senior tech recruiter and career coach for Brazilian devs targeting US remote roles. Produce STRICT JSON with:
-- ats_score (0-100)
-- readiness_summary (2-3 sentences)
-- bullet_rewrites (array of {original, improved} up to 5 items)
-- missing_keywords (array of strings, prioritize US job-post language)
-- english_recommendations (array of strings)
-- 30_day_plan (array of 5 concrete actions)
-- risk_flags (array of short strings: red flags for ATS or recruiters)
-- formatting_issues (array of up to 5 strings: layout/structure problems)
-- role_fit_summary (2 sentences on fit for target role, or general US remote fit if none)
-- category_scores (same 6 ids as partial: ats, keywords, formatting, impact, english, role_fit - refine scores with tips)`,
-          fullPayload,
-          { models: FREE_MODELS, json: true },
-        );
+        const unlockPrompt = `You are a senior tech recruiter and career coach for Brazilian devs targeting US remote roles.
+
+TASK: Produce a detailed, actionable report for this resume.
+
+RESPONSE FORMAT: Return a single valid JSON object. Do NOT wrap it in markdown code fences. Do NOT include any text before or after the JSON. The JSON must have exactly this structure:
+{"ats_score":<int 0-100>,"readiness_summary":"...","bullet_rewrites":[{"original":"...","improved":"..."}],"missing_keywords":["..."],"english_recommendations":["..."],"30_day_plan":["...","...","...","...","..."],"risk_flags":["..."],"formatting_issues":["..."],"role_fit_summary":"...","category_scores":[{"id":"ats","score":<int>,"tip":"..."},{"id":"keywords","score":<int>,"tip":"..."},{"id":"formatting","score":<int>,"tip":"..."},{"id":"impact","score":<int>,"tip":"..."},{"id":"english","score":<int>,"tip":"..."},{"id":"role_fit","score":<int>,"tip":"..."}]}
+
+RULES:
+- ats_score: integer 0-100
+- readiness_summary: 2-3 sentences
+- bullet_rewrites: array of up to 5 objects, each with "original" and "improved" strings
+- missing_keywords: array of strings, prioritize US job-post language
+- english_recommendations: array of strings
+- 30_day_plan: array of exactly 5 concrete action strings
+- risk_flags: array of short strings (red flags for ATS or recruiters)
+- formatting_issues: array of up to 5 strings (layout/structure problems)
+- role_fit_summary: 2 sentences on fit for target role, or general US remote fit if none
+- category_scores: array of exactly 6 objects. Each must have "id" (one of "ats","keywords","formatting","impact","english","role_fit"), "score" (integer 0-100), and "tip" (string, max 90 chars)`;
+        const ai = await callAI(unlockPrompt, fullPayload, { models: FREE_MODELS, json: true });
         if (!ai.ok) return json({ error: ai.error }, ai.status);
-        try { full = JSON.parse(ai.text); } catch { full = { raw: ai.text }; }
+        full = robustJsonParse(ai.text);
+        if (!full || typeof full !== "object" || !full.ats_score) {
+          const retry = await callAI(unlockPrompt, fullPayload, { models: FREE_MODELS, json: true });
+          if (retry.ok) full = robustJsonParse(retry.text);
+        }
+        if (!full || typeof full !== "object" || !full.ats_score) {
+          full = { raw: ai.text, parse_error: "Model did not return valid JSON" };
+        }
       }
 
       await supabase.from("resume_analyses").update({
