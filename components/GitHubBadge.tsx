@@ -5,15 +5,25 @@ import { useEffect, useState } from "react";
 const REPO = "william-keller/remotedevsbr";
 const REPO_URL = `https://github.com/${REPO}`;
 const STORAGE_KEY = "rdbr_github_stars";
+const CACHE_TTL_MS = 5 * 60 * 1000; // refetch after 5 minutes
 
-let memoryCache: number | null = null;
+let memoryCache: { value: number; expiresAt: number } | null = null;
 
 function readStored(): number | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return Number(raw);
+    const parsed = JSON.parse(raw);
+    if (
+      !parsed ||
+      typeof parsed.value !== "number" ||
+      typeof parsed.expiresAt !== "number" ||
+      Date.now() >= parsed.expiresAt
+    ) {
+      return null;
+    }
+    return parsed.value;
   } catch {
     return null;
   }
@@ -21,14 +31,19 @@ function readStored(): number | null {
 
 function store(value: number) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, String(value));
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ value, expiresAt: Date.now() + CACHE_TTL_MS })
+    );
   } catch {
     // ignore storage failures (e.g. private mode)
   }
 }
 
 export function GitHubBadge() {
-  const [stars, setStars] = useState<number | null>(() => memoryCache ?? readStored());
+  const [stars, setStars] = useState<number | null>(() =>
+    memoryCache && Date.now() < memoryCache.expiresAt ? memoryCache.value : readStored()
+  );
 
   useEffect(() => {
     if (stars !== null) return;
@@ -39,7 +54,7 @@ export function GitHubBadge() {
         if (cancelled) return;
         const count = data?.stargazers_count ?? null;
         if (count === null || typeof count !== "number") return;
-        memoryCache = count;
+        memoryCache = { value: count, expiresAt: Date.now() + CACHE_TTL_MS };
         store(count);
         setStars(count);
       })
@@ -49,6 +64,12 @@ export function GitHubBadge() {
     return () => {
       cancelled = true;
     };
+  }, [stars]);
+
+  useEffect(() => {
+    if (stars === null) return;
+    const timer = setTimeout(() => setStars(null), CACHE_TTL_MS);
+    return () => clearTimeout(timer);
   }, [stars]);
 
   return (
