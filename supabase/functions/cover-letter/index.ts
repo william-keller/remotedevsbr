@@ -63,17 +63,33 @@ function json(data: unknown, status: number) {
   });
 }
 
+// Extract the first JSON object from a model response, tolerating markdown
+// fences, leading prose, and trailing text that some free models emit even
+// when json_object mode is requested. Returns null when no valid object found.
+function extractJson<T>(raw: string): T | null {
+  const text = String(raw ?? "").trim();
+  if (!text) return null;
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  const candidate = text.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate) as T;
+  } catch {
+    return null;
+  }
+}
+
 async function runAI(system: string, user: string) {
   const ai = await callOpenAIRoute(system, user, { models: FREE_MODELS, json: true });
   if (!ai.ok) {
     return { error: ai.error, status: ai.status };
   }
-  const raw = ai.text ?? "{}";
-  try {
-    return { data: JSON.parse(raw) };
-  } catch {
-    return { data: { letter: raw, matched_keywords: [], missing_keywords: [], keyword_coverage: 0 } };
+  const parsed = extractJson<Record<string, unknown>>(ai.text ?? "");
+  if (!parsed) {
+    return { error: "The AI returned an unreadable response, please try again.", status: 502 };
   }
+  return { data: parsed };
 }
 
 Deno.serve(async (req) => {
