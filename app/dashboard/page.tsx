@@ -26,7 +26,7 @@ type LatestAnalysis = {
   created_at: string;
 };
 
-function readinessFromProfile(profile: any, analysis: LatestAnalysis | null) {
+function readinessFromProfile(profile: any, analysis: LatestAnalysis | null, t: (key: string) => string) {
   let score = 0;
   const checks: { label: string; done: boolean; href?: string }[] = [];
 
@@ -40,13 +40,13 @@ function readinessFromProfile(profile: any, analysis: LatestAnalysis | null) {
   const hasLinks = !!profile?.github_url || !!profile?.linkedin_url;
 
   const profileChecks = [
-    { ok: hasJob, label: "Cargo atual preenchido" },
-    { ok: hasYears, label: "Anos de experiência" },
-    { ok: hasStack, label: "Stack definida" },
-    { ok: hasEnglish, label: "Nível de inglês" },
-    { ok: hasSalary, label: "Expectativa salarial" },
-    { ok: hasGoals, label: "Objetivos remotos" },
-    { ok: hasLinks, label: "GitHub ou LinkedIn" },
+    { ok: hasJob, label: t("dashboard.checkJobTitle") },
+    { ok: hasYears, label: t("dashboard.checkYears") },
+    { ok: hasStack, label: t("dashboard.checkStack") },
+    { ok: hasEnglish, label: t("dashboard.checkEnglish") },
+    { ok: hasSalary, label: t("dashboard.checkSalary") },
+    { ok: hasGoals, label: t("dashboard.checkGoals") },
+    { ok: hasLinks, label: t("dashboard.checkLinks") },
   ];
   const filled = profileChecks.filter(c => c.ok).length;
   score += Math.round((filled / profileChecks.length) * 40);
@@ -57,7 +57,7 @@ function readinessFromProfile(profile: any, analysis: LatestAnalysis | null) {
   const aiScore = Number(analysis?.partial?.overall_score ?? 0);
   if (analysis) score += Math.round((aiScore / 100) * 40);
   checks.push({
-    label: analysis ? `Currículo analisado (${aiScore}/100)` : "Analisar currículo com IA",
+    label: analysis ? t("dashboard.checkResumeDone").replace("{score}", String(aiScore)) : t("dashboard.checkResumeTodo"),
     done: !!analysis,
     href: "/analyze",
   });
@@ -97,8 +97,8 @@ function Inner() {
   }, [user]);
 
   const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
-  const { score, checks } = readinessFromProfile(profile, analysis);
-  const tier = score >= 80 ? "Pronto" : score >= 50 ? "Em progresso" : "Começando";
+  const { score, checks } = readinessFromProfile(profile, analysis, t);
+  const tier = score >= 80 ? t("dashboard.tierReady") : score >= 50 ? t("dashboard.tierProgress") : t("dashboard.tierStarting");
   const tierColor = score >= 80 ? "text-emerald-500" : score >= 50 ? "text-amber-500" : "text-red-500";
 
   return (
@@ -126,18 +126,18 @@ function Inner() {
         {score < 100 ? (
           <EngagementCard
             id="complete-profile"
-            title="Aumente seu Remote Readiness"
-            description="Complete as etapas que faltam no seu perfil para ganhar mais XP e se destacar para recrutadores."
-            actionText="Completar Perfil"
+            title={t("dashboard.nudgeIncompleteTitle")}
+            description={t("dashboard.nudgeIncompleteDesc")}
+            actionText={t("dashboard.nudgeIncompleteAction")}
             actionUrl="/profile"
             variant="primary"
           />
         ) : (
           <EngagementCard
             id="apply-jobs"
-            title="Pronto para o mercado!"
-            description="Seu perfil está 100% otimizado. Veja as novas vagas remotas que combinam com o seu nível de inglês e stack."
-            actionText="Ver Vagas"
+            title={t("dashboard.nudgeReadyTitle")}
+            description={t("dashboard.nudgeReadyDesc")}
+            actionText={t("dashboard.nudgeReadyAction")}
             actionUrl="/jobs"
             variant="success"
           />
@@ -151,7 +151,7 @@ function Inner() {
         {/* Remote Readiness Dashboard */}
         <div className="rounded-2xl border bg-card p-6 md:p-8">
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-            <Gauge className="h-3.5 w-3.5" /> Remote Readiness
+            <Gauge className="h-3.5 w-3.5" /> {t("dashboard.readiness")}
           </div>
           <div className="mt-2 flex items-end justify-between flex-wrap gap-4">
             <div>
@@ -160,7 +160,7 @@ function Inner() {
             </div>
             {!analysis && (
               <Button asChild className="gradient-go text-primary-foreground">
-                <Link href="/analyze"><Sparkles className="h-4 w-4" /> Analisar currículo</Link>
+                <Link href="/analyze"><Sparkles className="h-4 w-4" /> {t("dashboard.analyzeResume")}</Link>
               </Button>
             )}
           </div>
@@ -183,26 +183,26 @@ function Inner() {
           <div className="rounded-xl border bg-card p-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h3 className="font-semibold">Última análise de currículo</h3>
+                <h3 className="font-semibold">{t("dashboard.lastAnalysis")}</h3>
                 <p className="text-xs text-muted-foreground">{new Date(analysis.created_at).toLocaleDateString()}</p>
               </div>
-              <Button asChild variant="outline" size="sm"><Link href="/analyze">Nova análise <ArrowRight className="h-3 w-3" /></Link></Button>
+              <Button asChild variant="outline" size="sm"><Link href="/analyze">{t("dashboard.newAnalysis")} <ArrowRight className="h-3 w-3" /></Link></Button>
             </div>
             <div className="grid md:grid-cols-3 gap-4 mt-4 text-sm">
               <div>
-                <div className="text-muted-foreground text-xs">Pontos fortes</div>
+                <div className="text-muted-foreground text-xs">{t("dashboard.topStrengths")}</div>
                 <ul className="mt-1 space-y-1 list-disc pl-4">
                   {(analysis.partial?.top_strengths ?? []).slice(0, 3).map((s: string, i: number) => <li key={i}>{s}</li>)}
                 </ul>
               </div>
               <div>
-                <div className="text-muted-foreground text-xs flex items-center gap-1"><ShieldAlert className="h-3 w-3" /> Gaps</div>
+                <div className="text-muted-foreground text-xs flex items-center gap-1"><ShieldAlert className="h-3 w-3" /> {t("dashboard.topGaps")}</div>
                 <ul className="mt-1 space-y-1 list-disc pl-4">
                   {(analysis.partial?.top_gaps ?? []).slice(0, 3).map((s: string, i: number) => <li key={i}>{s}</li>)}
                 </ul>
               </div>
               <div>
-                <div className="text-muted-foreground text-xs">Roles sugeridas</div>
+                <div className="text-muted-foreground text-xs">{t("dashboard.suggestedRoles")}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {(analysis.partial?.suggested_roles ?? []).map((r: string, i: number) =>
                     <span key={i} className="text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5">{r}</span>)}
@@ -225,7 +225,7 @@ function Inner() {
             <Button asChild variant="link" size="sm" className="px-0 mt-2"><Link href="/applications">{t("common.viewAll")} <ArrowRight className="ml-1 h-3 w-3" /></Link></Button>
           </div>
           <div className="rounded-xl border bg-card p-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground"><FileText className="h-4 w-4" /> Resume</div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground"><FileText className="h-4 w-4" /> {t("dashboard.resumeCard")}</div>
             <div className="mt-2 text-3xl font-bold">AI</div>
             <Button asChild variant="link" size="sm" className="px-0 mt-2"><Link href="/tools/resume">{t("resume.title")} <ArrowRight className="ml-1 h-3 w-3" /></Link></Button>
           </div>

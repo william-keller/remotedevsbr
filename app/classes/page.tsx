@@ -57,7 +57,7 @@ export default function Classes() {
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="text-4xl font-bold">{t("nav.classes")}</h1>
-            <p className="text-muted-foreground mt-1">Aulas gravadas focadas no mercado remoto US.</p>
+            <p className="text-muted-foreground mt-1">{t("classes.subtitle")}</p>
           </div>
           <Input placeholder={t("common.search")} value={q} onChange={e=>setQ(e.target.value)} className="max-w-xs" />
         </div>

@@ -23,11 +23,11 @@ function Inner() {
 
   useEffect(() => {
     if (params.get("success")) {
-      toast.success("Pagamento confirmado! Liberando Pro…");
+      toast.success(t("pro.paymentSuccess"));
       checkSub();
       router.replace(pathname);
     } else if (params.get("canceled")) {
-      toast.info("Checkout cancelado.");
+      toast.info(t("pro.checkoutCanceled"));
       router.replace(pathname);
     } else {
       checkSub();
@@ -50,7 +50,7 @@ function Inner() {
       if (data?.url) window.open(data.url, "_blank");
       else throw new Error(data?.error ?? "No checkout URL");
     } catch (e: any) {
-      toast.error(e.message ?? "Falha ao iniciar checkout");
+      toast.error(e.message ?? t("pro.checkoutError"));
     } finally { setLoading(null); }
   };
 
@@ -61,19 +61,19 @@ function Inner() {
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch (e: any) {
-      toast.error(e.message ?? "Falha ao abrir portal");
+      toast.error(e.message ?? t("pro.portalError"));
     } finally { setLoading(null); }
   };
 
   const features = [
-    "Biblioteca completa de aulas",
-    "Construtor de currículo com IA",
-    "Tunador de LinkedIn com IA",
-    "Lições de inglês completas",
-    "Guia completo de negociação",
-    "Help center de entrevistas",
-    "Submeta vagas na plataforma",
-    "Upload e geração ilimitada de currículos",
+    t("pro.f1"),
+    t("pro.f2"),
+    t("pro.f3"),
+    t("pro.f4"),
+    t("pro.f5"),
+    t("pro.f6"),
+    t("pro.f7"),
+    t("pro.f8"),
   ];
 
   return (
@@ -88,11 +88,11 @@ function Inner() {
           <div className="rounded-xl border border-gold/40 bg-gold/5 p-6 mb-8 flex items-center justify-between gap-4">
             <div>
               <p className="text-lg font-semibold text-gold">{t("pro.active")} ✨</p>
-              <p className="text-sm text-muted-foreground">Gerencie seu plano, método de pagamento ou cancele a qualquer momento.</p>
+              <p className="text-sm text-muted-foreground">{t("pro.manageSub")}</p>
             </div>
             <Button variant="outline" onClick={portal} disabled={loading === "portal"}>
               {loading === "portal" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Gerenciar assinatura
+              {t("pro.manageButton")}
             </Button>
           </div>
         )}
@@ -107,31 +107,31 @@ function Inner() {
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="rounded-2xl border bg-card p-8">
-            <h3 className="font-bold text-xl">Mensal</h3>
+            <h3 className="font-bold text-xl">{t("pro.monthly")}</h3>
             <div className="mt-3 flex items-baseline gap-1">
               <span className="text-4xl font-bold">R$ 29</span>
-              <span className="text-muted-foreground">/mês</span>
+              <span className="text-muted-foreground">{t("pro.perMonth")}</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">Cancele quando quiser.</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("pro.cancelAnytime")}</p>
             <Button onClick={() => checkout("monthly")} disabled={isPro || !!loading}
               className="w-full mt-6 gradient-go text-primary-foreground">
               {loading === "monthly" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {isPro ? "Já é Pro" : "Assinar mensal"}
+              {isPro ? t("pro.alreadyPro") : t("pro.subscribeMonthly")}
             </Button>
           </div>
 
           <div className="rounded-2xl border-2 border-gold/50 bg-card p-8 relative shadow-elegant">
-            <span className="absolute -top-3 right-6 px-2 py-0.5 rounded-full bg-gold text-gold-foreground text-xs font-bold">ECONOMIZE 17%</span>
-            <h3 className="font-bold text-xl">Anual</h3>
+            <span className="absolute -top-3 right-6 px-2 py-0.5 rounded-full bg-gold text-gold-foreground text-xs font-bold">{t("pro.save17")}</span>
+            <h3 className="font-bold text-xl">{t("pro.yearly")}</h3>
             <div className="mt-3 flex items-baseline gap-1">
               <span className="text-4xl font-bold">R$ 290</span>
-              <span className="text-muted-foreground">/ano</span>
+              <span className="text-muted-foreground">{t("pro.perYear")}</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">~R$ 24/mês - economize 2 meses.</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("pro.yearlyHint")}</p>
             <Button onClick={() => checkout("yearly")} disabled={isPro || !!loading}
               className="w-full mt-6 gradient-gold text-gold-foreground">
               {loading === "yearly" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {isPro ? "Já é Pro" : "Assinar anual"}
+              {isPro ? t("pro.alreadyPro") : t("pro.subscribeYearly")}
             </Button>
           </div>
         </div>
@@ -145,16 +145,21 @@ function Inner() {
         </ul>
 
         <p className="text-xs text-muted-foreground mt-8 text-center">
-          Pagamento seguro via Stripe. Aceitamos cartões nacionais e internacionais.
+          {t("pro.stripeNote")}
         </p>
       </div>
     </AppLayout>
   );
 }
-export default function Pro() { 
+function LoadingFallback() {
+  const { t } = useI18n();
+  return <div className="container max-w-5xl py-16 text-center text-muted-foreground">{t("common.loading")}</div>;
+}
+
+export default function Pro() {
   return (
     <RequireAuth>
-      <Suspense fallback={<div className="container max-w-5xl py-16 text-center text-muted-foreground">Carregando...</div>}>
+      <Suspense fallback={<LoadingFallback />}>
         <Inner />
       </Suspense>
     </RequireAuth>

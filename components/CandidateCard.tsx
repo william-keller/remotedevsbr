@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MapPin, Briefcase, Languages, FileText, CheckCircle2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface CandidateCardProps {
@@ -23,6 +24,7 @@ interface CandidateCardProps {
 }
 
 export function CandidateCard({ candidate, onExpressInterest }: CandidateCardProps) {
+  const { t } = useI18n();
   const {
     id,
     full_name,
@@ -45,11 +47,11 @@ export function CandidateCard({ candidate, onExpressInterest }: CandidateCardPro
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-lg truncate flex items-center gap-2">
             {full_name}
-            {is_blurred && <span className="text-[10px] uppercase bg-muted text-muted-foreground px-1.5 py-0.5 rounded">Free Tier</span>}
+            {is_blurred && <span className="text-[10px] uppercase bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{t("recruiter.freeTier")}</span>}
           </h3>
           <p className="text-muted-foreground truncate flex items-center gap-1 mt-0.5">
             <Briefcase className="h-3 w-3" />
-            {current_job_title || "Software Developer"} • {years_experience || 0} years exp
+            {current_job_title || t("recruiter.defaultJobTitle")} • {t("recruiter.yearsExp").replace("{n}", String(years_experience || 0))}
           </p>
         </div>
       </div>
@@ -57,11 +59,11 @@ export function CandidateCard({ candidate, onExpressInterest }: CandidateCardPro
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Languages className="h-4 w-4 shrink-0" />
-          <span className="truncate">English: {english_level || "N/A"}</span>
+          <span className="truncate">{t("recruiter.englishPrefix")} {english_level || "N/A"}</span>
         </div>
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <FileText className="h-4 w-4 shrink-0" />
-          <span className="truncate">Resume AI Score: 85/100</span> {/* Mocked for now */}
+          <span className="truncate">{t("recruiter.resumeScore")}</span> {/* Mocked for now */}
         </div>
       </div>
 
@@ -77,13 +79,13 @@ export function CandidateCard({ candidate, onExpressInterest }: CandidateCardPro
 
       <div className="mt-5 flex gap-2">
         <Button asChild variant="outline" className="flex-1">
-          <Link href={`/recruiter/candidate/${id}`}>View Profile</Link>
+          <Link href={`/recruiter/candidate/${id}`}>{t("recruiter.viewProfile")}</Link>
         </Button>
-        <Button 
+        <Button
           className="flex-1"
           onClick={() => onExpressInterest?.(id)}
         >
-          Express Interest
+          {t("recruiter.expressInterest")}
         </Button>
       </div>
     </div>

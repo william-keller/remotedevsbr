@@ -91,7 +91,7 @@ function Inner() {
   const onAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t("profile.maxAvatarSize")); return; }
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
@@ -167,7 +167,7 @@ function Inner() {
         {/* Professional profile */}
         <div className="space-y-4 rounded-xl border bg-card p-6">
           <div><Label>{t("auth.fullName")}</Label><Input value={form.full_name} onChange={e=>set("full_name")(e.target.value)} /></div>
-          <div><Label>{t("profile.currentJob")}</Label><Input placeholder="ex. Full-stack Developer" value={form.current_job_title} onChange={e=>set("current_job_title")(e.target.value)} /></div>
+          <div><Label>{t("profile.currentJob")}</Label><Input placeholder={t("profile.currentJobPlaceholder")} value={form.current_job_title} onChange={e=>set("current_job_title")(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-4">
             <div><Label>{t("profile.yearsExperience")}</Label><Input type="number" min={0} max={50} placeholder="3" value={form.years_experience} onChange={e=>set("years_experience")(e.target.value)} /></div>
             <div><Label>{t("profile.englishLevel")}</Label>
@@ -179,7 +179,7 @@ function Inner() {
               </Select>
             </div>
           </div>
-          <div><Label>{t("profile.stack")}</Label><Input value={form.stack} onChange={e=>set("stack")(e.target.value)} placeholder="React, Node, Postgres" /></div>
+          <div><Label>{t("profile.stack")}</Label><Input value={form.stack} onChange={e=>set("stack")(e.target.value)} placeholder={t("profile.stackPlaceholder")} /></div>
           <div><Label>{t("profile.language")}</Label>
             <Select value={form.locale} onValueChange={(v: "pt"|"en")=>set("locale")(v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -195,7 +195,7 @@ function Inner() {
         {/* Remote opportunities */}
         <div className="space-y-4 rounded-xl border bg-card p-6">
           <div><Label>{t("profile.salaryExpectation")}</Label><Input type="number" min={0} placeholder="90000" value={form.salary_expectation_usd} onChange={e=>set("salary_expectation_usd")(e.target.value)} /></div>
-          <div><Label>{t("profile.remoteGoals")}</Label><Textarea rows={3} placeholder="US company, PJ contract, full-remote, async..." value={form.remote_goals} onChange={e=>set("remote_goals")(e.target.value)} /></div>
+          <div><Label>{t("profile.remoteGoals")}</Label><Textarea rows={3} placeholder={t("profile.remoteGoalsPlaceholder")} value={form.remote_goals} onChange={e=>set("remote_goals")(e.target.value)} /></div>
           <div><Label>{t("profile.githubUrl")}</Label><Input placeholder="https://github.com/username" value={form.github_url} onChange={e=>set("github_url")(e.target.value)} /></div>
           <div><Label>{t("profile.linkedinUrl")}</Label><Input placeholder="https://linkedin.com/in/profile" value={form.linkedin_url} onChange={e=>set("linkedin_url")(e.target.value)} /></div>
         </div>
@@ -302,10 +302,10 @@ function MockInterviewSection({ userId }: { userId: string }) {
           .eq("id", appt.availability_id);
       }
 
-      toast.success("Appointment canceled and credit refunded.");
+      toast.success(t("mockInterview.profile.canceledToast"));
       loadData();
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to cancel");
+      toast.error(e.message ?? t("mockInterview.profile.cancelFailed"));
     } finally {
       setCancelingId(null);
     }
@@ -351,7 +351,7 @@ function MockInterviewSection({ userId }: { userId: string }) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground animate-pulse py-4">Carregando...</p>
+        <p className="text-sm text-muted-foreground animate-pulse py-4">{t("common.loading")}</p>
       ) : appointments.length === 0 ? (
         <div className="text-center py-6 border rounded-lg bg-muted/20">
           <p className="text-sm text-muted-foreground mb-3">{t("mockInterview.profile.noAppointments")}</p>
@@ -369,7 +369,7 @@ function MockInterviewSection({ userId }: { userId: string }) {
                     {a.scheduled_date} &bull; {a.scheduled_start?.slice(0, 5)} - {a.scheduled_end?.slice(0, 5)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("mockInterview.book.interviewer")}: {a.mock_interview_interviewers?.name ?? "Assigned Interviewer"}
+                    {t("mockInterview.book.interviewer")}: {a.mock_interview_interviewers?.name ?? t("mockInterview.profile.assignedInterviewer")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -391,7 +391,7 @@ function MockInterviewSection({ userId }: { userId: string }) {
               </div>
               {a.instructions && (
                 <div className="mt-2 text-xs bg-muted p-2.5 rounded-md border text-muted-foreground whitespace-pre-line">
-                  <span className="font-semibold block text-foreground mb-1">Instruções:</span>
+                  <span className="font-semibold block text-foreground mb-1">{t("mockInterview.profile.instructions")}</span>
                   {a.instructions}
                 </div>
               )}

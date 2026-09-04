@@ -31,7 +31,7 @@ export default function Help() {
       />
       <div className="container max-w-4xl py-10">
         <h1 className="text-4xl font-bold">{t("nav.help")}</h1>
-        <p className="text-muted-foreground mt-2 mb-6">Help center, prep de entrevistas e FAQ.</p>
+        <p className="text-muted-foreground mt-2 mb-6">{t("help.subtitle")}</p>
         <Input placeholder={t("common.search")} value={q} onChange={e=>setQ(e.target.value)} className="mb-6 max-w-md" />
 
         {cats.map(cat => {

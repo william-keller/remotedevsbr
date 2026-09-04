@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AppLayout } from "@/components/Layout";
+import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ type JobDetail = {
 
 export default function JobDetailPage() {
   const params = useParams<{ slug: string }>();
+  const { t } = useI18n();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,17 +50,17 @@ export default function JobDetailPage() {
     <AppLayout>
       <div className="container py-10">
         <Button asChild variant="ghost" className="mb-6">
-          <Link href="/jobs"><ArrowLeft className="h-4 w-4 mr-2" />Back to jobs</Link>
+          <Link href="/jobs"><ArrowLeft className="h-4 w-4 mr-2" />{t("jobs.detail.back")}</Link>
         </Button>
 
-        {loading && <p className="text-muted-foreground">Loading...</p>}
-        {!loading && !job && <p className="text-muted-foreground">Job not found.</p>}
+        {loading && <p className="text-muted-foreground">{t("common.loading")}</p>}
+        {!loading && !job && <p className="text-muted-foreground">{t("jobs.detail.notFound")}</p>}
 
         {job && (
           <article className="max-w-4xl rounded-xl border bg-card p-6">
             <p className="text-sm text-muted-foreground">{job.company_name}</p>
             <h1 className="text-3xl font-bold mt-1">{job.role}</h1>
-            <p className="text-sm text-muted-foreground mt-2">{job.location || "Remote"} • {new Date(job.posted_at).toLocaleDateString()}</p>
+            <p className="text-sm text-muted-foreground mt-2">{job.location || t("jobs.locType.remote")} • {new Date(job.posted_at).toLocaleDateString()}</p>
 
             {(job.salary_min || job.salary_max) && (
               <p className="mt-4 font-medium">
@@ -82,7 +84,7 @@ export default function JobDetailPage() {
 
             <div className="mt-8">
               <Button asChild className="gradient-go text-primary-foreground">
-                <a href={job.apply_url} target="_blank" rel="noreferrer">Apply now <ExternalLink className="h-4 w-4 ml-2" /></a>
+                <a href={job.apply_url} target="_blank" rel="noreferrer">{t("jobs.detail.applyNow")} <ExternalLink className="h-4 w-4 ml-2" /></a>
               </Button>
             </div>
           </article>

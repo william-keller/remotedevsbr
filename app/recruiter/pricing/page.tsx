@@ -7,8 +7,10 @@ import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
+import { useI18n } from "@/lib/i18n";
 
 export default function RecruiterPricing() {
+  const { t } = useI18n();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (plan: "professional" | "enterprise") => {
@@ -36,10 +38,9 @@ export default function RecruiterPricing() {
       />
       <div className="container py-16">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">Pricing for Modern Teams</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-4">{t("recruiter.pricing.title")}</h1>
           <p className="text-lg text-muted-foreground">
-            Get direct access to Brazil's top 5% of remote-ready software engineers. 
-            No placement fees, no middlemen.
+            {t("recruiter.pricing.sub")}
           </p>
         </div>
 
@@ -47,16 +48,16 @@ export default function RecruiterPricing() {
           {/* Professional Plan */}
           <div className="border rounded-2xl p-8 bg-card flex flex-col">
             <div className="mb-6">
-              <h3 className="text-2xl font-bold">Professional</h3>
-              <div className="mt-2 text-muted-foreground">For growing teams</div>
+              <h3 className="text-2xl font-bold">{t("recruiter.pricing.professional")}</h3>
+              <div className="mt-2 text-muted-foreground">{t("recruiter.pricing.forGrowing")}</div>
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-4xl font-bold">R$ 199</span>
-                <span className="text-muted-foreground">/mo</span>
+                <span className="text-muted-foreground">{t("recruiter.pricing.perMonth")}</span>
               </div>
             </div>
-            
+
             <ul className="space-y-4 mb-8 flex-1">
-              {["15 direct messages per month", "Full candidate profiles (unblurred)", "Advanced filtering (Stack, English level)", "Email notifications"].map((f, i) => (
+              {[t("recruiter.pricing.pf1"), t("recruiter.pricing.pf2"), t("recruiter.pricing.pf3"), t("recruiter.pricing.pf4")].map((f, i) => (
                 <li key={i} className="flex gap-3 text-sm">
                   <Check className="h-5 w-5 text-emerald-500 shrink-0" />
                   <span>{f}</span>
@@ -71,7 +72,7 @@ export default function RecruiterPricing() {
               onClick={() => handleCheckout("professional")}
             >
               {loading === "professional" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Get Professional
+              {t("recruiter.pricing.getProfessional")}
             </Button>
           </div>
 
@@ -79,26 +80,26 @@ export default function RecruiterPricing() {
           <div className="border-2 border-emerald-500 rounded-2xl p-8 bg-card flex flex-col relative shadow-lg shadow-emerald-500/10">
             <div className="absolute top-0 right-8 -translate-y-1/2">
               <span className="bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider py-1 px-3 rounded-full">
-                Most Popular
+                {t("recruiter.pricing.mostPopular")}
               </span>
             </div>
             
             <div className="mb-6">
-              <h3 className="text-2xl font-bold">Enterprise</h3>
-              <div className="mt-2 text-muted-foreground">For scaling organizations</div>
+              <h3 className="text-2xl font-bold">{t("recruiter.pricing.enterprise")}</h3>
+              <div className="mt-2 text-muted-foreground">{t("recruiter.pricing.forScaling")}</div>
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-4xl font-bold">R$ 499</span>
-                <span className="text-muted-foreground">/mo</span>
+                <span className="text-muted-foreground">{t("recruiter.pricing.perMonth")}</span>
               </div>
             </div>
-            
+
             <ul className="space-y-4 mb-8 flex-1">
               {[
-                "Unlimited direct messages",
-                "Full candidate profiles",
-                "AI-powered matching algorithms",
-                "Export candidates to ATS",
-                "Dedicated account manager"
+                t("recruiter.pricing.ef1"),
+                t("recruiter.pricing.ef2"),
+                t("recruiter.pricing.ef3"),
+                t("recruiter.pricing.ef4"),
+                t("recruiter.pricing.ef5")
               ].map((f, i) => (
                 <li key={i} className="flex gap-3 text-sm font-medium">
                   <Check className="h-5 w-5 text-emerald-500 shrink-0" />
@@ -113,7 +114,7 @@ export default function RecruiterPricing() {
               onClick={() => handleCheckout("enterprise")}
             >
               {loading === "enterprise" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Get Enterprise
+              {t("recruiter.pricing.getEnterprise")}
             </Button>
           </div>
         </div>

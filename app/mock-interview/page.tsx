@@ -97,7 +97,7 @@ function Inner() {
       if (data?.url) window.open(data.url, "_blank");
       else throw new Error(data?.error ?? "No checkout URL");
     } catch (e: any) {
-      toast.error(e.message ?? "Checkout failed");
+      toast.error(e.message ?? t("mockInterview.checkoutError"));
     } finally {
       setLoading(null);
     }
@@ -116,25 +116,25 @@ function Inner() {
       icon: Cpu,
       title: t("mockInterview.topic1Title"),
       desc: t("mockInterview.topic1Desc"),
-      badge: "Arquitetura & Escala",
+      badge: t("mockInterview.badge1"),
     },
     {
       icon: Code2,
       title: t("mockInterview.topic2Title"),
       desc: t("mockInterview.topic2Desc"),
-      badge: "LeetCode & Coding",
+      badge: t("mockInterview.badge2"),
     },
     {
       icon: Layers,
       title: t("mockInterview.topic3Title"),
       desc: t("mockInterview.topic3Desc"),
-      badge: "Clean Code & Trade-offs",
+      badge: t("mockInterview.badge3"),
     },
     {
       icon: Globe,
       title: t("mockInterview.topic4Title"),
       desc: t("mockInterview.topic4Desc"),
-      badge: "English Tech Screen",
+      badge: t("mockInterview.badge4"),
     },
   ];
 
@@ -142,17 +142,17 @@ function Inner() {
     {
       icon: BadgeCheck,
       title: t("mockInterview.repStat1"),
-      desc: "Entrevistadores com experiência comprovada atuando em empresas de tecnologia nos EUA e Europa.",
+      desc: t("mockInterview.repDesc1"),
     },
     {
       icon: Award,
       title: t("mockInterview.repStat2"),
-      desc: "Dezenas de avaliações técnicas conduzidas para contratações sênior, plenas e liderança técnica.",
+      desc: t("mockInterview.repDesc2"),
     },
     {
       icon: Terminal,
       title: t("mockInterview.repStat3"),
-      desc: "Avaliação criteriosa de estrutura de dados, escolhas de banco, mensageria e comunicação técnica.",
+      desc: t("mockInterview.repDesc3"),
     },
   ];
 
@@ -190,7 +190,7 @@ function Inner() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
         <div className="container relative max-w-5xl py-20 md:py-28 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary mb-6">
-            <Video className="h-3.5 w-3.5" /> Mock Interview Técnica
+            <Video className="h-3.5 w-3.5" /> {t("mockInterview.heroChip")}
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
             {t("mockInterview.heroTitle")}
@@ -201,13 +201,13 @@ function Inner() {
 
           <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border bg-card text-xs font-semibold">
-              <Cpu className="h-3.5 w-3.5 text-primary" /> System Design & Arquitetura
+              <Cpu className="h-3.5 w-3.5 text-primary" /> {t("mockInterview.pill1")}
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border bg-card text-xs font-semibold">
-              <Code2 className="h-3.5 w-3.5 text-primary" /> LeetCode & Live Coding
+              <Code2 className="h-3.5 w-3.5 text-primary" /> {t("mockInterview.pill2")}
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border bg-card text-xs font-semibold">
-              <Globe className="h-3.5 w-3.5 text-primary" /> Tech English Interview
+              <Globe className="h-3.5 w-3.5 text-primary" /> {t("mockInterview.pill3")}
             </span>
           </div>
 
@@ -253,7 +253,7 @@ function Inner() {
         <div className="container max-w-5xl">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3">
-              <Award className="h-3.5 w-3.5" /> Reputação & Experiência
+              <Award className="h-3.5 w-3.5" /> {t("mockInterview.reputationChip")}
             </div>
             <h2 className="text-3xl font-bold">{t("mockInterview.reputationTitle")}</h2>
             <p className="text-muted-foreground mt-2 text-sm md:text-base">
@@ -275,7 +275,7 @@ function Inner() {
 
           {interviewers.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-center mb-6">Nossos Entrevistadores Cadastrados</h3>
+              <h3 className="text-lg font-bold text-center mb-6">{t("mockInterview.interviewersTitle")}</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 {interviewers.map((int) => (
                   <div key={int.id} className="p-6 rounded-2xl border bg-card flex flex-col md:flex-row gap-5 items-start">
@@ -293,7 +293,7 @@ function Inner() {
                         <BadgeCheck className="h-4 w-4 text-primary" />
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {pickLocaleField(int, "bio", locale) || "Senior Software Engineer & Tech Interviewer"}
+                        {pickLocaleField(int, "bio", locale) || t("mockInterview.defaultBio")}
                       </p>
                       {int.specialties && int.specialties.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">
@@ -382,7 +382,7 @@ function Inner() {
           })}
         </div>
         <p className="text-xs text-muted-foreground mt-6 text-center">
-          Pagamento seguro via Stripe. Aceitamos cartões nacionais e internacionais.
+          {t("mockInterview.stripeNote")}
         </p>
       </section>
 

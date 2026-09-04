@@ -1,14 +1,17 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n";
+
 const DISCORD_URL = "https://discord.gg/EypZrzfF6";
 
 export function DiscordBadge() {
+  const { t } = useI18n();
   return (
     <a
       href={DISCORD_URL}
       target="_blank"
       rel="noreferrer"
-      aria-label="RemoteDevsBR on Discord"
+      aria-label={t("social.discordAria")}
       className="hidden sm:inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,13 +16,14 @@ import { Users, Search, Building2, CreditCard, LogOut, Briefcase, Loader2 } from
 import { Footer } from "@/components/Layout";
 
 const navItems = [
-  { to: "/recruiter/dashboard", label: "Dashboard", icon: <Building2 className="w-4 h-4" /> },
-  { to: "/recruiter/search", label: "Candidate Search", icon: <Search className="w-4 h-4" /> },
-  { to: "/recruiter/pricing", label: "Subscription", icon: <CreditCard className="w-4 h-4" /> },
+  { to: "/recruiter/dashboard", label: "recruiter.nav.dashboard", icon: <Building2 className="w-4 h-4" /> },
+  { to: "/recruiter/search", label: "recruiter.nav.search", icon: <Search className="w-4 h-4" /> },
+  { to: "/recruiter/pricing", label: "recruiter.nav.subscription", icon: <CreditCard className="w-4 h-4" /> },
 ];
 
 export function RecruiterHeader() {
   const { user, profile, signOut } = useAuth();
+  const { t } = useI18n();
   const pathname = usePathname();
 
   return (
@@ -31,7 +33,7 @@ export function RecruiterHeader() {
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500 text-white shadow-glow">
             <Users className="h-4 w-4" />
           </span>
-          <span>RemoteDevs<span className="text-emerald-400">BR</span> <span className="font-normal text-sm text-slate-400 ml-2">For Recruiters</span></span>
+          <span>RemoteDevs<span className="text-emerald-400">BR</span> <span className="font-normal text-sm text-slate-400 ml-2">{t("recruiter.forRecruiters")}</span></span>
         </Link>
 
         <nav className="ml-8 hidden lg:flex items-center gap-6">
@@ -43,7 +45,7 @@ export function RecruiterHeader() {
                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${isActive ? "text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}
               >
                 {n.icon}
-                {n.label}
+                {t(n.label)}
               </Link>
             );
           })}
@@ -51,7 +53,7 @@ export function RecruiterHeader() {
 
         <div className="ml-auto flex items-center gap-4">
           <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-slate-800">
-             <Link href="/">Switch to Developer</Link>
+             <Link href="/">{t("recruiter.switchToDev")}</Link>
           </Button>
           
           {user ? (
@@ -67,18 +69,18 @@ export function RecruiterHeader() {
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-sm">
                   <div className="font-medium truncate">{profile?.full_name ?? user.email}</div>
-                  <div className="text-xs text-muted-foreground">Recruiter Account</div>
+                  <div className="text-xs text-muted-foreground">{t("recruiter.accountLabel")}</div>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()} className="text-red-500 focus:text-red-500 cursor-pointer">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign out
+                  {t("nav.signout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              <Link href="/recruiter/auth">Sign in as Recruiter</Link>
+              <Link href="/recruiter/auth">{t("recruiter.signinAs")}</Link>
             </Button>
           )}
         </div>

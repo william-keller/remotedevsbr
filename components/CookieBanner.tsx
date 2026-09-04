@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 
 export function CookieBanner() {
+  const { t } = useI18n();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -46,16 +48,15 @@ export function CookieBanner() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="text-sm text-muted-foreground max-w-3xl">
-        Utilizamos cookies essenciais e tecnologias semelhantes para melhorar a sua experiência na nossa plataforma, além de ferramentas de análise para entender como você utiliza o nosso site. 
-        Ao clicar em "Aceitar", você concorda com o uso de cookies para esses fins, conforme nossa{" "}
-        <Link href="/privacy-policy" className="underline hover:text-foreground">Política de Privacidade</Link>.
+        {t("cookie.textA")}{" "}
+        <Link href="/privacy-policy" className="underline hover:text-foreground">{t("auth.privacyLink")}</Link>.
       </div>
       <div className="flex gap-2 shrink-0">
         <Button variant="outline" size="sm" onClick={handleReject}>
-          Recusar Não Essenciais
+          {t("cookie.reject")}
         </Button>
         <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleAccept}>
-          Aceitar Cookies
+          {t("cookie.accept")}
         </Button>
       </div>
     </div>
