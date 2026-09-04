@@ -12,6 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Filter, Loader2, Lock } from "lucide-react";
 import Link from "next/link";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export default function RecruiterSearch() {
   const router = useRouter();
@@ -20,12 +28,15 @@ export default function RecruiterSearch() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState("free");
   const [loadError, setLoadError] = useState<string | null>(null);
-  
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 9;
+
   // Filters
   const [stack, setStack] = useState("");
   const [english, setEnglish] = useState("any");
 
-  const search = async () => {
+  const search = async (targetPage = 1) => {
     setLoading(true);
     setLoadError(null);
     try {
@@ -34,13 +45,15 @@ export default function RecruiterSearch() {
         if (english && english !== "any") filters.english_level = english;
 
         const { data, error } = await supabase.functions.invoke("recruiter-search", {
-            body: { filters }
+            body: { filters, page: targetPage, page_size: pageSize }
         });
         
         if (error) throw error;
         if (!Array.isArray(data?.candidates)) throw new Error("Unexpected response from search.");
         setCandidates(data.candidates || []);
         setPlan(data?.plan || "free");
+        setTotal(data?.total ?? 0);
+        setPage(data?.page ?? targetPage);
     } catch (e: any) {
         setCandidates([]);
         setLoadError(e?.message || t("recruiter.searchFailed"));
@@ -50,9 +63,11 @@ export default function RecruiterSearch() {
   };
 
   // Initial load
-  useEffect(() => { search(); }, []);
+  useEffect(() => { search(1); }, []);
 
   const isFree = plan === "free";
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <RecruiterLayout>
@@ -95,7 +110,7 @@ export default function RecruiterSearch() {
 
 
 
-                    <Button onClick={search} className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
+                    <Button onClick={() => search(1)} className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
                         {t("recruiter.applyFilters")}
                     </Button>
@@ -125,14 +140,14 @@ export default function RecruiterSearch() {
                 <div className="mb-6 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/20 dark:border-red-800 p-5">
                     <h2 className="font-bold text-red-900 dark:text-red-400">{t("recruiter.loadErrorTitle")}</h2>
                     <p className="text-sm text-red-800/90 dark:text-red-500/90 mt-1">{loadError}</p>
-                    <Button onClick={search} variant="outline" className="mt-3" disabled={loading}>
+                    <Button onClick={() => search(1)} variant="outline" className="mt-3" disabled={loading}>
                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} {t("recruiter.tryAgain")}
                     </Button>
                 </div>
             )}
 
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">{t("recruiter.candidates")} <span className="text-muted-foreground text-lg font-normal">({candidates.length})</span></h2>
+                <h2 className="text-2xl font-bold">{t("recruiter.candidates")} <span className="text-muted-foreground text-lg font-normal">{t("recruiter.resultsCount").replace("{shown}", String(candidates.length)).replace("{total}", String(total))}</span></h2>
                 {isFree && (
                     <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-medium">{t("recruiter.freePreview")}</span>
                 )}
@@ -145,7 +160,7 @@ export default function RecruiterSearch() {
                     <p className="text-muted-foreground">{t("recruiter.noCandidates")}</p>
                 </div>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {candidates.map(c => (
                         <CandidateCard 
                             key={c.id} 
@@ -154,6 +169,38 @@ export default function RecruiterSearch() {
                         />
                     ))}
                 </div>
+            )}
+
+            {!loading && total > pageSize && (
+                <Pagination className="mt-8">
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); if (page > 1) search(page - 1); }}
+                                className={page <= 1 ? "pointer-events-none opacity-50" : undefined}
+                            />
+                        </PaginationItem>
+                        {pageNumbers.map((p) => (
+                            <PaginationItem key={p}>
+                                <PaginationLink
+                                    href="#"
+                                    isActive={p === page}
+                                    onClick={(e) => { e.preventDefault(); if (p !== page) search(p); }}
+                                >
+                                    {p}
+                                </PaginationLink>
+                            </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); if (page < totalPages) search(page + 1); }}
+                                className={page >= totalPages ? "pointer-events-none opacity-50" : undefined}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
             )}
         </div>
 

@@ -49,12 +49,18 @@ Deno.serve(async (req) => {
     const plan = subscription?.plan || "free";
     const isFree = plan === "free";
 
-    const { filters = {} } = await req.json();
+    const { filters = {}, page = 1, page_size = 9 } = await req.json();
+
+    const currentPage = Math.max(1, Math.floor(Number(page) || 1));
+    const pageSize = Math.min(50, Math.max(1, Math.floor(Number(page_size) || 9)));
+
+    const from = (currentPage - 1) * pageSize;
+    const to = from + pageSize - 1;
 
     // Build search query
     let query = adminClient
       .from("profiles")
-      .select("id, full_name, avatar_url, current_job_title, english_level, stack, years_experience, remote_goals, monthly_income_bucket")
+      .select("id, full_name, avatar_url, current_job_title, english_level, stack, years_experience, remote_goals, monthly_income_bucket", { count: "exact" })
       .eq("visible_to_recruiters", true);
 
     if (filters.stack && filters.stack.length > 0) {
@@ -65,11 +71,12 @@ Deno.serve(async (req) => {
     }
     // Add more filters as needed...
 
-    // Limit results based on tier
-    query = query.limit(50);
+    query = query.range(from, to);
 
-    const { data: candidates, error } = await query;
+    const { data: candidates, error, count } = await query;
     if (error) throw error;
+
+    const total = count ?? 0;
 
     // Obfuscate data for free tier
     const results = candidates.map((c: any) => {
@@ -97,6 +104,9 @@ Deno.serve(async (req) => {
       success: true, 
       candidates: results,
       plan,
+      total,
+      page: currentPage,
+      page_size: pageSize,
       requires_subscription: isFree,
       message: isFree
         ? "You're on the free tier. Upgrade to a Professional or Enterprise plan to unlock full profiles and contact candidates."
