@@ -12,11 +12,11 @@ export default function Tools() {
   const items = [
     { to: "/mock-interview", icon: Video, title: t("mockInterview.toolTitle"), desc: t("mockInterview.toolDesc"), pro: false },
     { to: "/tools/cover-letter", icon: Mail, title: t("coverLetter.title"), desc: t("tools.coverLetterDesc"), pro: false },
-    { to: "/tools/resume", icon: FileText, title: t("resume.title"), desc: "Gere um currículo ATS otimizado em segundos.", pro: true },
-    { to: "/tools/linkedin", icon: User, title: t("linkedin.title"), desc: "Sugestões de IA pro seu perfil.", pro: true },
-    { to: "/tools/salary", icon: Calculator, title: t("salary.title"), desc: "USD x BRL: hora, semana, mês, ano.", pro: false },
-    { to: "/tools/invoice-generator", icon: ReceiptText, title: t("invoice.toolTitle"), desc: t("invoice.toolSubtitle"), pro: false },
-    { to: "/english", icon: Scale, title: "English lessons", desc: "Inglês prático para tech.", pro: true },
+    { to: "/tools/resume", icon: FileText, title: t("resume.title"), desc: t("tools.resumeDesc"), pro: true },
+    { to: "/tools/linkedin", icon: User, title: t("linkedin.title"), desc: t("tools.linkedinDesc"), pro: true },
+    { to: "/tools/salary", icon: Calculator, title: t("salary.title"), desc: t("tools.salaryDesc"), pro: false },
+    { to: "/invoice-generator", icon: ReceiptText, title: t("invoice.toolTitle"), desc: t("invoice.toolSubtitle"), pro: false },
+    { to: "/english", icon: Scale, title: t("english.title"), desc: t("english.subtitle"), pro: true },
   ];
   return (
     <AppLayout>
@@ -27,7 +27,7 @@ export default function Tools() {
       />
       <div className="container py-10">
         <h1 className="text-4xl font-bold">{t("nav.tools")}</h1>
-        <p className="text-muted-foreground mt-2 mb-8">Ferramentas pra acelerar sua jornada.</p>
+        <p className="text-muted-foreground mt-2 mb-8">{t("tools.subtitle")}</p>
         <div className="grid md:grid-cols-2 gap-5">
           {items.map(i => (
             <Link key={i.to} href={i.to} className="rounded-xl border bg-card p-6 hover:border-primary/40 hover:shadow-elegant transition group">

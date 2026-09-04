@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PaywallCard } from "@/components/ProBadge";
 import { RequireAuth } from "@/components/Guards";
+import { Markdown } from "@/components/Markdown";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -54,7 +55,7 @@ function Inner() {
           </div>
           <div className="rounded-xl border bg-card p-6 min-h-[400px]">
             <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{t("linkedin.suggestions")}</h3>
-            <pre className="whitespace-pre-wrap text-sm font-sans">{output || "-"}</pre>
+            {output ? <Markdown className="text-sm">{output}</Markdown> : <span className="text-muted-foreground">-</span>}
           </div>
         </div>
       </div>

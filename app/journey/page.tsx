@@ -68,7 +68,7 @@ export default function Journey() {
       <div className="container py-10">
         <div className="max-w-3xl">
           <h1 className="text-4xl font-bold">{t("nav.journey")}</h1>
-          <p className="text-muted-foreground mt-2">Da fundação à negociação. Marque os passos conforme avança e ganhe XP.</p>
+          <p className="text-muted-foreground mt-2">{t("journey.subtitle")}</p>
           <div className="mt-4 text-sm text-muted-foreground">{totalDone}/{total} {t("common.completed").toLowerCase()}</div>
           {user && (
             <div className="mt-6 p-4 rounded-xl border bg-card">

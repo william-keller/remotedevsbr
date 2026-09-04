@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthModalProvider } from "@/lib/auth-modal";
 import { AuthModal } from "@/components/AuthModal";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { FeatureTogglesProvider, useFeatureToggles } from "@/lib/feature-toggles";
 
 /**
@@ -21,10 +21,19 @@ import { FeatureTogglesProvider, useFeatureToggles } from "@/lib/feature-toggles
 function LocaleSync({ children }: { children: ReactNode }) {
   const { user, profile } = useAuth();
   const { locale, setLocale } = useI18n();
+  const appliedProfileId = useRef<string | null>(null);
 
-  // Apply the profile's saved locale once it loads, overriding toggled value.
+  // Apply the profile's saved locale once per profile load (login or profile
+  // refresh), never again afterwards: re-running this on every locale change
+  // would treat the user's own toggle as a divergence and revert it.
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!user) {
+      appliedProfileId.current = null;
+      return;
+    }
+    if (!profile) return;
+    if (appliedProfileId.current === profile.id) return;
+    appliedProfileId.current = profile.id;
     if ((profile.locale === "pt" || profile.locale === "en") && profile.locale !== locale) {
       setLocale(profile.locale);
     }

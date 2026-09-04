@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SEO } from "@/components/SEO";
 import { AppLayout } from "@/components/Layout";
+import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -87,6 +88,7 @@ function SectionHeading({ kicker, title, sub }: { kicker: string; title: string;
 }
 
 export default function AnalyticsPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,18 +99,19 @@ export default function AnalyticsPage() {
       .then(({ data, error: fnError }) => {
         if (cancelled) return;
         if (fnError) {
-          setError(fnError.message ?? "Failed to load analytics");
+          setError(fnError.message ?? t("analytics.loadError"));
           return;
         }
         setData(data as AnalyticsData);
-        if (!data) setError("No analytics data returned");
+        if (!data) setError(t("analytics.noData"));
       })
       .catch((e) => {
-        if (!cancelled) setError(e?.message ?? "Failed to load analytics");
+        if (!cancelled) setError(e?.message ?? t("analytics.loadError"));
       });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const green = "hsl(142 72% 35%)";
@@ -119,16 +122,16 @@ export default function AnalyticsPage() {
   const tealDark = "hsl(186 70% 55%)";
 
   const membersConfig = {
-    members: { label: "Members", theme: { light: green, dark: greenDark } },
+    members: { label: t("analytics.members"), theme: { light: green, dark: greenDark } },
   };
   const jobsConfig = {
-    added: { label: "Jobs added", theme: { light: goldLight, dark: gold } },
+    added: { label: t("analytics.jobsAdded"), theme: { light: goldLight, dark: gold } },
   };
   const analysesConfig = {
-    added: { label: "Analyses", theme: { light: teal, dark: tealDark } },
+    added: { label: t("analytics.analysesShort"), theme: { light: teal, dark: tealDark } },
   };
   const achConfig = {
-    value: { label: "Achievements", theme: { light: goldLight, dark: gold } },
+    value: { label: t("analytics.achievementsShort"), theme: { light: goldLight, dark: gold } },
   };
 
   return (
@@ -140,13 +143,10 @@ export default function AnalyticsPage() {
       />
       <div className="container py-10 md:py-14">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Open</p>
-          <h1 className="mt-2 text-4xl font-extrabold tracking-tight">All our numbers, live.</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">{t("analytics.kicker")}</p>
+          <h1 className="mt-2 text-4xl font-extrabold tracking-tight">{t("analytics.title")}</h1>
           <p className="mt-4 text-muted-foreground">
-            RemoteDevsBR is building the fastest path for Brazilian developers to land remote roles.
-            Here are the platform metrics that matter: the jobs we surface, the developers we serve, the free
-            tools they use, and the recruiters who reach them. Every figure is pulled live from the product
-            itself, not a rounded snapshot.
+            {t("analytics.intro")}
           </p>
         </div>
 
@@ -163,25 +163,25 @@ export default function AnalyticsPage() {
         ) : (
           <>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Open jobs" value={data.catalogue.jobs} />
-              <StatCard label="Hiring companies" value={data.catalogue.companies} />
-              <StatCard label="Community projects" value={data.catalogue.side_projects} />
-              <StatCard label="Resume analyses run" value={data.funnel.resume_analyses} />
+              <StatCard label={t("analytics.openJobs")} value={data.catalogue.jobs} />
+              <StatCard label={t("analytics.hiringCompanies")} value={data.catalogue.companies} />
+              <StatCard label={t("analytics.communityProjects")} value={data.catalogue.side_projects} />
+              <StatCard label={t("analytics.analysesRun")} value={data.funnel.resume_analyses} />
             </div>
 
             <SectionHeading
-              kicker="Developers"
-              title="The community"
-              sub="Registered developer members, how many complete onboarding, and the ones on a paid plan."
+              kicker={t("analytics.developers")}
+              title={t("analytics.community")}
+              sub={t("analytics.communitySub")}
             />
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Registered developers" value={data.members.total} />
-              <StatCard label="Completed onboarding" value={data.members.onboarded} />
-              <StatCard label="Pro subscribers" value={data.members.pro_subscribers} />
-              <StatCard label="Combined XP earned" value={data.members.total_xp} />
+              <StatCard label={t("analytics.registeredDevs")} value={data.members.total} />
+              <StatCard label={t("analytics.completedOnboarding")} value={data.members.onboarded} />
+              <StatCard label={t("analytics.proSubscribers")} value={data.members.pro_subscribers} />
+              <StatCard label={t("analytics.totalXp")} value={data.members.total_xp} />
             </div>
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              <ChartCard title="Cumulative registered developers">
+              <ChartCard title={t("analytics.cumulativeDevs")}>
                 <ChartContainer config={membersConfig} className="h-64">
                   <AreaChart data={data.members.cumulative} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                     <defs>
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
                   </AreaChart>
                 </ChartContainer>
               </ChartCard>
-              <ChartCard title="Members added per day">
+              <ChartCard title={t("analytics.membersDaily")}>
                 <ChartContainer config={membersConfig} className="h-64">
                   <BarChart data={data.growth.members_daily} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -218,16 +218,16 @@ export default function AnalyticsPage() {
             </div>
 
             <SectionHeading
-              kicker="Free tools"
-              title="The funnel"
-              sub="Our free AI resume analyzer is the top of the funnel. These are the analyses it has run, and the applications developers have gone on to log."
+              kicker={t("analytics.freeTools")}
+              title={t("analytics.funnel")}
+              sub={t("analytics.funnelSub")}
             />
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Resume analyses" value={data.funnel.resume_analyses} />
-              <StatCard label="Applications logged" value={data.funnel.applications} />
+              <StatCard label={t("analytics.resumeAnalyses")} value={data.funnel.resume_analyses} />
+              <StatCard label={t("analytics.applicationsLogged")} value={data.funnel.applications} />
             </div>
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              <ChartCard title="Resume analyses run per day">
+              <ChartCard title={t("analytics.analysesDaily")}>
                 <ChartContainer config={analysesConfig} className="h-64">
                   <BarChart data={data.growth.analyses_daily} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -238,7 +238,7 @@ export default function AnalyticsPage() {
                   </BarChart>
                 </ChartContainer>
               </ChartCard>
-              <ChartCard title="Jobs added per day">
+              <ChartCard title={t("analytics.jobsDaily")}>
                 <ChartContainer config={jobsConfig} className="h-64">
                   <BarChart data={data.growth.jobs_daily} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -252,18 +252,18 @@ export default function AnalyticsPage() {
             </div>
 
             <SectionHeading
-              kicker="Recruiters"
-              title="Employer side"
-              sub="Recruiting teams searching our talent pool, and the interests they have sent to developers."
+              kicker={t("analytics.recruiters")}
+              title={t("analytics.employerSide")}
+              sub={t("analytics.employerSub")}
             />
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Recruiting companies" value={data.recruiter.companies} />
-              <StatCard label="Candidate searches" value={data.recruiter.searches} />
-              <StatCard label="Interests sent" value={data.recruiter.interests} />
-              <StatCard label="Achievements earned" value={data.engagement.achievements_earned} />
+              <StatCard label={t("analytics.recruitingCompanies")} value={data.recruiter.companies} />
+              <StatCard label={t("analytics.candidateSearches")} value={data.recruiter.searches} />
+              <StatCard label={t("analytics.interestsSent")} value={data.recruiter.interests} />
+              <StatCard label={t("analytics.achievementsEarned")} value={data.engagement.achievements_earned} />
             </div>
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              <ChartCard title="Cumulative achievements earned">
+              <ChartCard title={t("analytics.achievementsCumulative")}>
                 <ChartContainer config={achConfig} className="h-64">
                   <AreaChart data={data.engagement.achievements_series} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                     <defs>
@@ -280,9 +280,9 @@ export default function AnalyticsPage() {
                   </AreaChart>
                 </ChartContainer>
               </ChartCard>
-              <ChartCard title="Learning">
+              <ChartCard title={t("analytics.learning")}>
                 <div className="flex h-64 flex-col items-start justify-center">
-                  <div className="text-sm font-medium text-muted-foreground">Completed lessons</div>
+                  <div className="text-sm font-medium text-muted-foreground">{t("analytics.completedLessons")}</div>
                   <div className="mt-2 text-4xl font-extrabold tracking-tight tabular-nums">
                     {formatNumber(data.engagement.completed_lessons)}
                   </div>
@@ -291,14 +291,12 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="mt-14 rounded-xl border bg-muted/30 p-6 text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground">Where do these numbers come from?</p>
+              <p className="font-semibold text-foreground">{t("analytics.sourceTitle")}</p>
               <p className="mt-2">
-                Straight from the RemoteDevsBR database at request time. Each figure is a single aggregate total
-                across the product tables, and no individual member, resume, application, or recruiter row is ever
-                exposed. Totals refresh live and are cached for a few minutes server-side.
+                {t("analytics.sourceDesc")}
               </p>
               <p className="mt-3">
-                Updated:{" "}
+                {t("analytics.updated")}{" "}
                 <span className="font-medium text-foreground">
                   {data.generated_at ? new Date(data.generated_at).toLocaleString("en-US") : "n/a"}
                 </span>

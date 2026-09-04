@@ -23,8 +23,8 @@ export default function English() {
         canonicalPath="/english"
       />
       <div className="container max-w-4xl py-10">
-        <h1 className="text-4xl font-bold">English lessons</h1>
-        <p className="text-muted-foreground mt-2 mb-8">Inglês prático para o dia a dia tech.</p>
+        <h1 className="text-4xl font-bold">{t("english.title")}</h1>
+        <p className="text-muted-foreground mt-2 mb-8">{t("english.subtitle")}</p>
         <div className="space-y-3">
           {items.map(l => {
             const locked = l.is_pro && !isPro;

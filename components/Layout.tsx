@@ -129,8 +129,8 @@ export function Header() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild><Link href="/dashboard">{t("nav.dashboard")}</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/achievements">Achievements</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/profile">{t("nav.profile")}</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/achievements">{t("nav.achievements")}</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/applications">{t("dashboard.applications")}</Link></DropdownMenuItem>
                   {isAdmin && <DropdownMenuItem asChild><Link href="/admin">{t("nav.admin")}</Link></DropdownMenuItem>}
                   <DropdownMenuSeparator />
