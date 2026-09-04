@@ -36,6 +36,8 @@ export function CandidateCard({ candidate, onExpressInterest }: CandidateCardPro
     is_blurred
   } = candidate;
 
+  const techStack = stack ?? [];
+
   return (
     <div className="rounded-xl border bg-card p-5 transition-all hover:border-primary/40 group">
       <div className="flex gap-4 items-start">
@@ -69,7 +71,7 @@ export function CandidateCard({ candidate, onExpressInterest }: CandidateCardPro
 
       <div className="mt-4">
         <div className="flex flex-wrap gap-1.5 h-14 overflow-hidden">
-          {stack.map((tech, idx) => (
+          {techStack.map((tech, idx) => (
             <span key={idx} className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md">
               {tech}
             </span>
