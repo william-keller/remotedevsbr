@@ -69,10 +69,10 @@ export default function Resources() {
                     <div className="text-xs text-gold mt-2 inline-flex items-center gap-1"><Lock className="h-3 w-3" />{t("common.locked")}</div>
                   ) : r.url ? (
                     <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary mt-2 inline-flex items-center gap-1 hover:underline">
-                      Open <ExternalLink className="h-3 w-3" />
+                      {t("resources.open")} <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : (
-                    <button onClick={() => toast.info("Conteúdo em breve")} className="text-sm text-primary mt-2 hover:underline">Read</button>
+                    <button onClick={() => toast.info(t("resources.comingSoon"))} className="text-sm text-primary mt-2 hover:underline">{t("resources.read")}</button>
                   )}
                 </div>
               </div>

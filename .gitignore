@@ -52,3 +52,13 @@ supabase/config.local.toml
 
 # personal agent skills, not part of the product
 .agents/
+
+# competitive research (internal, gitignored)
+/competitive-research/
+
+# seo audits & reports (internal, gitignored)
+/seo/
+
+
+# content manager working folder
+/.content-manager/
