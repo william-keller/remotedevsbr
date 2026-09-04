@@ -34,7 +34,7 @@ type FormState = {
 
 function Inner() {
   const { user, profile, refreshProfile } = useAuth();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -122,7 +122,7 @@ function Inner() {
       bio: form.bio,
       github_url: form.github_url.trim() || null,
       linkedin_url: form.linkedin_url.trim() || null,
-      locale: form.locale,
+      locale,
       visible_to_recruiters: form.visible_to_recruiters,
     }).eq("id", user.id);
     setSaving(false);
@@ -181,7 +181,7 @@ function Inner() {
           </div>
           <div><Label>{t("profile.stack")}</Label><Input value={form.stack} onChange={e=>set("stack")(e.target.value)} placeholder={t("profile.stackPlaceholder")} /></div>
           <div><Label>{t("profile.language")}</Label>
-            <Select value={form.locale} onValueChange={(v: "pt"|"en")=>set("locale")(v)}>
+            <Select value={form.locale} onValueChange={(v: "pt"|"en")=>{ set("locale")(v); setLocale(v); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="pt">Portugu&#234;s</SelectItem>
