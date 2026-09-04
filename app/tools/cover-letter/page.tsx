@@ -360,6 +360,28 @@ function CoverLetterGeneratorInner() {
     [t],
   );
 
+  // Normalize a backend letter value into a plain string. Guards against the
+  // server ever returning a raw JSON object/string blob instead of a paragraph.
+  const normalizeLetter = (value: unknown): string => {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed && typeof parsed.letter === "string") return parsed.letter;
+        } catch {
+          /* not JSON, use as-is */
+        }
+      }
+      return trimmed;
+    }
+    if (value && typeof value === "object") {
+      const maybe = (value as Record<string, unknown>).letter;
+      if (typeof maybe === "string") return maybe;
+    }
+    return "";
+  };
+
   const generate = async () => {
     setLoading(true);
     setMeta(null);
@@ -383,7 +405,7 @@ function CoverLetterGeneratorInner() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const result = data as GenerateResult;
-      setLetter(result.letter ?? "");
+      setLetter(normalizeLetter(result.letter));
       setRecordId(result.id);
       setMeta({
         id: result.id,
@@ -598,7 +620,7 @@ function CoverLetterGeneratorInner() {
     setTone(item.tone || "confident");
     setLanguage(item.language || "en");
     setTemplateId(item.template_id || "classic");
-    setLetter(item.generated_text || "");
+    setLetter(normalizeLetter(item.generated_text || ""));
     setRecordId(item.id);
     setMeta({
       id: item.id,
