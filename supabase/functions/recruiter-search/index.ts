@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
       .single();
 
     const plan = subscription?.plan || "free";
+    const isFree = plan === "free";
 
     const { filters = {} } = await req.json();
 
@@ -95,7 +96,11 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       candidates: results,
-      plan
+      plan,
+      requires_subscription: isFree,
+      message: isFree
+        ? "You're on the free tier. Upgrade to a Professional or Enterprise plan to unlock full profiles and contact candidates."
+        : null
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
