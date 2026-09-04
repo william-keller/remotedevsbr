@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, Lock } from "lucide-react";
+import Link from "next/link";
 
 export default function RecruiterSearch() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function RecruiterSearch() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState("free");
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   // Filters
   const [stack, setStack] = useState("");
@@ -26,20 +27,23 @@ export default function RecruiterSearch() {
 
   const search = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
         const filters: any = {};
         if (stack) filters.stack = [stack.trim()];
         if (english && english !== "any") filters.english_level = english;
-        // Call edge function
+
         const { data, error } = await supabase.functions.invoke("recruiter-search", {
             body: { filters }
         });
         
         if (error) throw error;
+        if (!Array.isArray(data?.candidates)) throw new Error("Unexpected response from search.");
         setCandidates(data.candidates || []);
-        setPlan(data.plan || "free");
+        setPlan(data?.plan || "free");
     } catch (e: any) {
-        toast.error(t("recruiter.searchFailed") + ": " + e.message);
+        setCandidates([]);
+        setLoadError(e?.message || t("recruiter.searchFailed"));
     } finally {
         setLoading(false);
     }
@@ -47,6 +51,8 @@ export default function RecruiterSearch() {
 
   // Initial load
   useEffect(() => { search(); }, []);
+
+  const isFree = plan === "free";
 
   return (
     <RecruiterLayout>
@@ -99,9 +105,35 @@ export default function RecruiterSearch() {
 
         {/* Results */}
         <div className="flex-1">
+            {isFree && (
+                <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1">
+                        <h2 className="font-bold flex items-center gap-2 text-amber-900 dark:text-amber-400">
+                            <Lock className="w-4 h-4" /> {t("recruiter.freeTitle")}
+                        </h2>
+                        <p className="text-sm text-amber-800/90 dark:text-amber-500/90 mt-1">
+                            {t("recruiter.freeDescription")}
+                        </p>
+                    </div>
+                    <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
+                        <Link href="/recruiter/pricing">{t("recruiter.upgradePlan")}</Link>
+                    </Button>
+                </div>
+            )}
+
+            {loadError && (
+                <div className="mb-6 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/20 dark:border-red-800 p-5">
+                    <h2 className="font-bold text-red-900 dark:text-red-400">{t("recruiter.loadErrorTitle")}</h2>
+                    <p className="text-sm text-red-800/90 dark:text-red-500/90 mt-1">{loadError}</p>
+                    <Button onClick={search} variant="outline" className="mt-3" disabled={loading}>
+                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} {t("recruiter.tryAgain")}
+                    </Button>
+                </div>
+            )}
+
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">{t("recruiter.candidates")} <span className="text-muted-foreground text-lg font-normal">({candidates.length})</span></h2>
-                {plan === "free" && (
+                {isFree && (
                     <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-medium">{t("recruiter.freePreview")}</span>
                 )}
             </div>
