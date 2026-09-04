@@ -2763,6 +2763,286 @@ function ProjectsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count
   );
 }
 
+const recruiterPlans = ["free", "professional", "enterprise"] as const;
+const recruiterStatuses = ["active", "inactive", "trialing", "canceled"] as const;
+
+function RecruitersAdmin() {
+  const [recruiters, setRecruiters] = useState<any[]>([]);
+  const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [dialog, setDialog] = useState<null | { mode: "create" | "edit"; recruiter?: any }>(null);
+  const [form, setForm] = useState<any>({});
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.functions.invoke("admin-recruiters", { body: { action: "list" } });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    setRecruiters(data.recruiters ?? []);
+    setUsers(data.users ?? []);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const openCreate = () => {
+    setForm({
+      user_id: "",
+      company_name: "",
+      company_website: "",
+      industry: "",
+      is_verified: false,
+      plan: "free",
+      status: "active",
+      candidate_views_remaining: 0,
+      candidate_contacts_remaining: 0,
+    });
+    setDialog({ mode: "create" });
+  };
+
+  const openEdit = (r: any) => {
+    const s = r.subscription ?? {};
+    setForm({
+      user_id: r.user_id,
+      company_name: r.company_name ?? "",
+      company_website: r.company_website ?? "",
+      industry: r.industry ?? "",
+      is_verified: !!r.is_verified,
+      plan: s.plan ?? "free",
+      status: s.status ?? "active",
+      candidate_views_remaining: s.candidate_views_remaining ?? 0,
+      candidate_contacts_remaining: s.candidate_contacts_remaining ?? 0,
+    });
+    setDialog({ mode: "edit", recruiter: r });
+  };
+
+  const save = async () => {
+    if (!form.company_name?.trim()) { toast.error("Company name is required"); return; }
+    if (dialog?.mode === "create" && !form.user_id) { toast.error("Select a user"); return; }
+    setSaving(true);
+    const { error } = await supabase.functions.invoke("admin-recruiters", {
+      body: {
+        action: "upsert",
+        user_id: form.user_id,
+        profile: {
+          company_name: form.company_name,
+          company_website: form.company_website || null,
+          industry: form.industry || null,
+          is_verified: !!form.is_verified,
+        },
+        subscription: {
+          plan: form.plan,
+          status: form.status,
+          candidate_views_remaining: Number(form.candidate_views_remaining) || 0,
+          candidate_contacts_remaining: Number(form.candidate_contacts_remaining) || 0,
+        },
+      },
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(dialog?.mode === "edit" ? "Recruiter updated" : "Recruiter created");
+    setDialog(null);
+    load();
+  };
+
+  const remove = async (r: any) => {
+    if (!confirm(`Delete recruiter ${r.company_name}? This also removes their subscription.`)) return;
+    const { error } = await supabase.functions.invoke("admin-recruiters", {
+      body: { action: "delete", user_id: r.user_id },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Recruiter deleted");
+    load();
+  };
+
+  const filtered = recruiters.filter((r) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return [r.company_name, r.email, r.name, r.subscription?.plan]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q));
+  });
+
+  const planColor: Record<string, string> = {
+    free: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    professional: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    enterprise: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  };
+  const statusColor: Record<string, string> = {
+    active: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    inactive: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+    trialing: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    canceled: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+        <div>
+          <h2 className="text-2xl font-bold">Recruiters</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage recruiter accounts and their subscription plans. Plans: free (blurred results), professional (full profiles + limited contacts), enterprise (full profiles + unlimited contacts).
+          </p>
+        </div>
+        <Button onClick={openCreate} className="gradient-go text-primary-foreground shrink-0">
+          <Plus className="h-4 w-4 mr-1" /> Add Recruiter
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search by company, email, or plan..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+        <Button variant="outline" size="icon" onClick={load} title="Refresh">
+          <Loader2 className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+        </Button>
+      </div>
+
+      {loading && recruiters.length === 0 ? (
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading recruiters...
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-card overflow-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b bg-muted/40">
+                <th className="p-3 font-medium">Recruiter</th>
+                <th className="p-3 font-medium">Email</th>
+                <th className="p-3 font-medium">Plan</th>
+                <th className="p-3 font-medium">Status</th>
+                <th className="p-3 font-medium text-right">Contacts Left</th>
+                <th className="p-3 font-medium text-right">Views Left</th>
+                <th className="p-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No recruiters found.</td></tr>
+              ) : filtered.map((r) => {
+                const s = r.subscription ?? {};
+                return (
+                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
+                    <td className="p-3">
+                      <div className="font-medium">{r.company_name}</div>
+                      {r.name && <div className="text-xs text-muted-foreground">{r.name}</div>}
+                      {r.is_verified && <div className="text-xs text-emerald-600">Verified</div>}
+                    </td>
+                    <td className="p-3 text-muted-foreground">{r.email ?? "-"}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${planColor[s.plan ?? "free"] ?? planColor.free}`}>
+                        {(s.plan ?? "free").toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[s.status ?? "inactive"] ?? statusColor.inactive}`}>
+                        {s.status ?? "inactive"}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right tabular-nums">{s.candidate_contacts_remaining ?? 0}</td>
+                    <td className="p-3 text-right tabular-nums">{s.candidate_views_remaining ?? 0}</td>
+                    <td className="p-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openEdit(r)} className="text-primary p-1" title="Edit"><Pencil className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => remove(r)} className="text-destructive p-1" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {dialog && (
+        <Dialog open onOpenChange={(v) => { if (!v) setDialog(null); }}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{dialog.mode === "edit" ? `Edit Recruiter: ${dialog.recruiter?.company_name}` : "Add Recruiter"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {dialog.mode === "create" && (
+                <div>
+                  <Label>User *</Label>
+                  <Select
+                    value={form.user_id}
+                    onValueChange={(v) => setForm({ ...form, user_id: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select a user by email" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {users.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>{u.email || u.id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {dialog.mode === "edit" && (
+                <div className="text-sm text-muted-foreground">
+                  Attached user: <span className="font-medium text-foreground">{dialog.recruiter?.email ?? dialog.recruiter?.name ?? dialog.recruiter?.user_id}</span>
+                </div>
+              )}
+              <div>
+                <Label>Company Name *</Label>
+                <Input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} />
+              </div>
+              <div>
+                <Label>Website</Label>
+                <Input value={form.company_website ?? ""} onChange={(e) => setForm({ ...form, company_website: e.target.value })} />
+              </div>
+              <div>
+                <Label>Industry</Label>
+                <Input value={form.industry ?? ""} onChange={(e) => setForm({ ...form, industry: e.target.value })} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={!!form.is_verified} onCheckedChange={(v) => setForm({ ...form, is_verified: v })} />
+                <Label>Verified</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Plan</Label>
+                  <Select value={form.plan} onValueChange={(v) => setForm({ ...form, plan: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {recruiterPlans.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {recruiterStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Contacts Remaining</Label>
+                  <Input type="number" value={form.candidate_contacts_remaining} onChange={(e) => setForm({ ...form, candidate_contacts_remaining: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Views Remaining</Label>
+                  <Input type="number" value={form.candidate_views_remaining} onChange={(e) => setForm({ ...form, candidate_views_remaining: e.target.value })} />
+                </div>
+              </div>
+              {form.plan === "enterprise" && (
+                <p className="text-xs text-emerald-600">Enterprise grants unlimited contacts regardless of the remaining count.</p>
+              )}
+              <Button onClick={save} disabled={saving} className="w-full">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Save
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
 function Inner() {
   const [pendingProjectsCount, setPendingProjectsCount] = useState(0);
   const [pendingJobsCount, setPendingJobsCount] = useState(0);
@@ -2821,6 +3101,7 @@ function Inner() {
             <TabsTrigger value="english_lessons">English</TabsTrigger>
             <TabsTrigger value="feature_toggles">Feature Toggles</TabsTrigger>
             <TabsTrigger value="mock_interviews">Mock Interviews</TabsTrigger>
+            <TabsTrigger value="recruiters">Recruiters</TabsTrigger>
             <TabsTrigger value="journey">Journey</TabsTrigger>
           </TabsList>
           {(["companies","resources","classes","help_articles","english_lessons"] as Section[]).map(s => (
@@ -2840,6 +3121,9 @@ function Inner() {
           </TabsContent>
           <TabsContent value="journey" className="mt-6">
             <JourneyAdmin />
+          </TabsContent>
+          <TabsContent value="recruiters" className="mt-6">
+            <RecruitersAdmin />
           </TabsContent>
         </Tabs>
         <p className="text-xs text-muted-foreground mt-8">To become an admin, use the database panel and add a row in <code>user_roles</code> with your user_id and role=admin.</p>
