@@ -15,7 +15,7 @@ export default function Tools() {
     { to: "/tools/resume", icon: FileText, title: t("resume.title"), desc: t("tools.resumeDesc"), pro: true },
     { to: "/tools/linkedin", icon: User, title: t("linkedin.title"), desc: t("tools.linkedinDesc"), pro: true },
     { to: "/tools/salary", icon: Calculator, title: t("salary.title"), desc: t("tools.salaryDesc"), pro: false },
-    { to: "/invoice-generator", icon: ReceiptText, title: t("invoice.toolTitle"), desc: t("invoice.toolSubtitle"), pro: false },
+    { to: "/tools/invoice-generator", icon: ReceiptText, title: t("invoice.toolTitle"), desc: t("invoice.toolSubtitle"), pro: false },
     { to: "/english", icon: Scale, title: t("english.title"), desc: t("english.subtitle"), pro: true },
   ];
   return (
