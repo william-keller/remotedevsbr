@@ -19,9 +19,7 @@ interface SalaryValues {
   rate: number;
 }
 
-function safe(divisor: number, value: number): number {
-  return divisor === 0 ? 0 : value / divisor;
-}
+const safe = (divisor: number, value: number): number => (divisor === 0 ? 0 : value / divisor);
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
@@ -68,8 +66,10 @@ export default function SalaryCalc() {
   const { t } = useI18n();
   const [values, setValues] = useState<SalaryValues>(initialValues);
   const [anchor, setAnchor] = useState<MoneyField | null>(null);
+  const [drafts, setDrafts] = useState<Partial<Record<MoneyField, string>>>({});
 
   const setMoney = useCallback((field: MoneyField, raw: string) => {
+    setDrafts((d) => ({ ...d, [field]: raw }));
     const v = Number(raw);
     if (Number.isNaN(v)) return;
     setAnchor(field);
@@ -79,13 +79,13 @@ export default function SalaryCalc() {
   const setHours = useCallback((raw: string) => {
     const h = Number(raw);
     if (Number.isNaN(h)) return;
-    setValues((cur) => ({ ...cur, hours: h, hourly: safe(h, cur.weekly) }));
+    setValues((cur) => ({ ...cur, hours: h, hourly: round2(safe(h, cur.weekly)) }));
   }, []);
 
   const setRate = useCallback((raw: string) => {
     const r = Number(raw);
     if (Number.isNaN(r)) return;
-    setValues((cur) => ({ ...cur, rate: r, brlMonthly: cur.monthly * r }));
+    setValues((cur) => ({ ...cur, rate: r, brlMonthly: round2(cur.monthly * r) }));
   }, []);
 
   const moneyFields: { key: MoneyField; label: string; prefix: string }[] = [
@@ -117,20 +117,25 @@ export default function SalaryCalc() {
           </div>
         </div>
         <h2 className="text-xl font-bold mb-3">{t("salary.results")}</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 rounded-xl border bg-card p-6">
           {moneyFields.map(({ key, label, prefix }) => (
-            <div
-              key={key}
-              className={`rounded-xl border bg-card p-5 ${anchor === key ? "border-primary ring-1 ring-primary" : ""}`}
-            >
-              <div className="text-xs uppercase text-muted-foreground tracking-wider">{label}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <span className="text-sm text-muted-foreground pt-1">{prefix}</span>
+            <div key={key}>
+              <Label>{label}</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{prefix}</span>
                 <Input
                   type="number"
-                  className="text-2xl font-bold h-auto border-0 bg-transparent p-0 focus-visible:ring-0"
-                  value={values[key]}
+                  step="0.01"
+                  className={`pl-8 ${anchor === key ? "ring-2 ring-primary" : ""}`}
+                  value={drafts[key] ?? values[key].toFixed(2)}
                   onChange={(e) => setMoney(key, e.target.value)}
+                  onBlur={() =>
+                    setDrafts((d) => {
+                      const next = { ...d };
+                      delete next[key];
+                      return next;
+                    })
+                  }
                 />
               </div>
             </div>
