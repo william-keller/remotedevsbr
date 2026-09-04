@@ -11,6 +11,14 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+interface RecruiterSubscription {
+  recruiter_id: string;
+  plan: string;
+  status: string;
+  candidate_views_remaining: number;
+  candidate_contacts_remaining: number;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -53,24 +61,26 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false });
       if (pErr) throw pErr;
 
-      const recruiterIds = (recruiters ?? []).map((r: { id: string }) => r.id);
-      const subsById = new Map<string, any>();
+      const recruiterIds = (recruiters ?? []).map((r) => r.id);
+      const subsById = new Map<string, RecruiterSubscription>();
       if (recruiterIds.length > 0) {
         const { data: subs } = await adminClient
           .from("recruiter_subscriptions")
           .select("*")
           .in("recruiter_id", recruiterIds);
-        for (const s of subs ?? []) subsById.set(s.recruiter_id, s);
+        for (const s of (subs ?? []) as RecruiterSubscription[]) subsById.set(s.recruiter_id, s);
       }
 
-      const profileRows = (recruiters ?? []).map((r: any) => r.user_id);
+      const profileRows = (recruiters ?? []).map((r) => r.user_id);
       const nameById = new Map<string, string>();
       if (profileRows.length > 0) {
         const { data: profiles } = await adminClient
           .from("profiles")
           .select("id, full_name")
           .in("id", profileRows);
-        for (const p of profiles ?? []) nameById.set(p.id, p.full_name ?? "");
+        for (const p of (profiles ?? []) as { id: string; full_name: string | null }[]) {
+          nameById.set(p.id, p.full_name ?? "");
+        }
       }
 
       // Resolve auth emails (service role can only reach auth.users via the admin API)
@@ -84,7 +94,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const result = (recruiters ?? []).map((r: any) => ({
+      const result = (recruiters ?? []).map((r) => ({
         ...r,
         email: emailById.get(r.user_id) ?? null,
         name: nameById.get(r.user_id) ?? null,
@@ -101,7 +111,16 @@ Deno.serve(async (req) => {
       }
 
       // Create or update the recruiter profile (keyed by unique user_id)
-      const profilePayload: any = {
+      const profilePayload: {
+        company_name: string;
+        company_logo_url: string | null;
+        company_website: string | null;
+        company_size: string | null;
+        industry: string | null;
+        hiring_regions: string[];
+        roles_hiring: string[];
+        is_verified: boolean;
+      } = {
         company_name: profile.company_name,
         company_logo_url: profile.company_logo_url ?? null,
         company_website: profile.company_website ?? null,
@@ -137,7 +156,16 @@ Deno.serve(async (req) => {
       }
 
       // Upsert subscription (recruiter_id is UNIQUE)
-      const subPayload: any = {
+      const subPayload: {
+        recruiter_id: string;
+        plan: string;
+        status: string;
+        candidate_views_remaining: number;
+        candidate_contacts_remaining: number;
+        stripe_subscription_id: string | null;
+        current_period_start?: string;
+        current_period_end?: string;
+      } = {
         recruiter_id: recruiterId,
         plan: subscription?.plan ?? "free",
         status: subscription?.status ?? "active",
@@ -167,8 +195,8 @@ Deno.serve(async (req) => {
     }
 
     return json({ error: `Unknown action: ${action}` }, 400);
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("[admin-recruiters] error:", e);
-    return json({ error: e.message }, 500);
+    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });

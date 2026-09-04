@@ -2766,14 +2766,57 @@ function ProjectsAdmin({ onPendingCountChange }: { onPendingCountChange?: (count
 const recruiterPlans = ["free", "professional", "enterprise"] as const;
 const recruiterStatuses = ["active", "inactive", "trialing", "canceled"] as const;
 
+type RecruiterAdminItem = {
+  id: string;
+  user_id: string;
+  company_name: string;
+  company_website: string | null;
+  industry: string | null;
+  is_verified: boolean;
+  email: string | null;
+  name: string | null;
+  subscription: RecruiterSubscriptionRow | null;
+};
+
+type RecruiterSubscriptionRow = {
+  plan: string;
+  status: string;
+  candidate_views_remaining: number;
+  candidate_contacts_remaining: number;
+};
+
+type RecruiterForm = {
+  user_id: string;
+  company_name: string;
+  company_website: string;
+  industry: string;
+  is_verified: boolean;
+  plan: string;
+  status: string;
+  candidate_views_remaining: string | number;
+  candidate_contacts_remaining: string | number;
+};
+
+const emptyRecruiterForm: RecruiterForm = {
+  user_id: "",
+  company_name: "",
+  company_website: "",
+  industry: "",
+  is_verified: false,
+  plan: "free",
+  status: "active",
+  candidate_views_remaining: 0,
+  candidate_contacts_remaining: 0,
+};
+
 function RecruitersAdmin() {
-  const [recruiters, setRecruiters] = useState<any[]>([]);
+  const [recruiters, setRecruiters] = useState<RecruiterAdminItem[]>([]);
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [dialog, setDialog] = useState<null | { mode: "create" | "edit"; recruiter?: any }>(null);
-  const [form, setForm] = useState<any>({});
+  const [dialog, setDialog] = useState<null | { mode: "create" | "edit"; recruiter?: RecruiterAdminItem }>(null);
+  const [form, setForm] = useState<RecruiterForm>(emptyRecruiterForm);
 
   const load = async () => {
     setLoading(true);
@@ -2787,22 +2830,12 @@ function RecruitersAdmin() {
   useEffect(() => { load(); }, []);
 
   const openCreate = () => {
-    setForm({
-      user_id: "",
-      company_name: "",
-      company_website: "",
-      industry: "",
-      is_verified: false,
-      plan: "free",
-      status: "active",
-      candidate_views_remaining: 0,
-      candidate_contacts_remaining: 0,
-    });
+    setForm(emptyRecruiterForm);
     setDialog({ mode: "create" });
   };
 
-  const openEdit = (r: any) => {
-    const s = r.subscription ?? {};
+  const openEdit = (r: RecruiterAdminItem) => {
+    const s = r.subscription ?? ({ plan: "free", status: "inactive", candidate_views_remaining: 0, candidate_contacts_remaining: 0 } as RecruiterSubscriptionRow);
     setForm({
       user_id: r.user_id,
       company_name: r.company_name ?? "",
@@ -2846,7 +2879,7 @@ function RecruitersAdmin() {
     load();
   };
 
-  const remove = async (r: any) => {
+  const remove = async (r: RecruiterAdminItem) => {
     if (!confirm(`Delete recruiter ${r.company_name}? This also removes their subscription.`)) return;
     const { error } = await supabase.functions.invoke("admin-recruiters", {
       body: { action: "delete", user_id: r.user_id },
@@ -2920,7 +2953,7 @@ function RecruitersAdmin() {
               {filtered.length === 0 ? (
                 <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No recruiters found.</td></tr>
               ) : filtered.map((r) => {
-                const s = r.subscription ?? {};
+                const s: RecruiterSubscriptionRow = r.subscription ?? { plan: "free", status: "inactive", candidate_views_remaining: 0, candidate_contacts_remaining: 0 };
                 return (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
                     <td className="p-3">
