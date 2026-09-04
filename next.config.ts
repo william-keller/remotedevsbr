@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: "/invoice-generator",
+        destination: "/tools/invoice-generator",
+        statusCode: 301,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
