@@ -89,6 +89,39 @@ Experience with AWS and GitHub Actions required.`,
     sampleJobDescription: `Data pipelines with Airflow, dbt, Snowflake/BigQuery. SQL excellence, data quality checks.`,
     sampleResume: `Data Engineer 6 years. dbt + Airflow pipelines for fintech. Reduced pipeline failures 60%. SQL, Python, GCP.`,
   },
+  {
+    slug: "mobile-react-native",
+    roleKey: "coverLetter.ex.mobileRn",
+    seniorityKey: "coverLetter.ex.mid",
+    stackKey: "coverLetter.ex.reactNativeStack",
+    excerptKey: "coverLetter.ex.mobileRnExcerpt",
+    targetRole: "Mobile Engineer - React Native (Remote)",
+    sampleJobDescription: `Build and ship iOS and Android apps with React Native and TypeScript. Deep linking, push notifications, app store release process, crash monitoring.
+Required: 3+ years of mobile experience, Expo or bare workflow, REST APIs.`,
+    sampleResume: `Mobile engineer, 4 years React Native/Expo. Shipped 3 apps to the App Store and Play Store, 200k+ downloads. TypeScript, deep links, analytics and A/B tests. Based in Brazil, fluent English.`,
+  },
+  {
+    slug: "backend-python-cloud",
+    roleKey: "coverLetter.ex.backendPython",
+    seniorityKey: "coverLetter.ex.senior",
+    stackKey: "coverLetter.ex.pythonStack",
+    excerptKey: "coverLetter.ex.backendPythonExcerpt",
+    targetRole: "Backend Engineer - Python (Remote)",
+    sampleJobDescription: `Python backend for a data platform. Django or FastAPI, PostgreSQL, Redis, AWS. API design, testing, on-call rotation.
+Nice to have: Celery, dbt, event-driven systems.`,
+    sampleResume: `Backend engineer, 7 years Python. Built an ingest pipeline handling 50M events/day. Django and FastAPI, AWS ECS and SQS. Led a 4-engineer team; strong async communication.`,
+  },
+  {
+    slug: "ml-engineer-remote",
+    roleKey: "coverLetter.ex.ml",
+    seniorityKey: "coverLetter.ex.senior",
+    stackKey: "coverLetter.ex.mlStack",
+    excerptKey: "coverLetter.ex.mlExcerpt",
+    targetRole: "Machine Learning Engineer (Remote)",
+    sampleJobDescription: `Productionize ML models for a fintech. Python, PyTorch or TensorFlow, MLflow, feature stores, MLOps.
+Must have shipped models to production with monitoring and retraining loops.`,
+    sampleResume: `ML engineer, 5 years. Deployed a fraud detection model that cut losses 18%. PyTorch, SageMaker, Airflow, dbt. Fintech background; fluent English.`,
+  },
 ];
 
 export function getExampleBySlug(slug: string): CoverLetterExample | undefined {
