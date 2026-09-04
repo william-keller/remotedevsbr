@@ -7,16 +7,17 @@ import { AppLayout } from "@/components/Layout";
 import { RequireAuth } from "@/components/Guards";
 import { Construction } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { useI18n } from "@/lib/i18n";
 
 function Inner() {
+  const { t } = useI18n();
   return (
     <AppLayout>
       <div className="container max-w-3xl py-20 text-center">
         <Construction className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-        <h1 className="text-3xl font-bold">English Check (em breve)</h1>
+        <h1 className="text-3xl font-bold">{t("englishcheck.title")}</h1>
         <p className="text-muted-foreground mt-3">
-          Em breve: avaliação automática de inglês escrito (e depois falado) com
-          score CEFR, feedback granular e plano de melhoria.
+          {t("englishcheck.description")}
         </p>
       </div>
     </AppLayout>

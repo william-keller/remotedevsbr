@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 const REPO = "william-keller/remotedevsbr";
 const REPO_URL = `https://github.com/${REPO}`;
@@ -41,6 +42,7 @@ function store(value: number) {
 }
 
 export function GitHubBadge() {
+  const { t } = useI18n();
   const [stars, setStars] = useState<number | null>(() =>
     memoryCache && Date.now() < memoryCache.expiresAt ? memoryCache.value : readStored()
   );
@@ -77,7 +79,7 @@ export function GitHubBadge() {
       href={REPO_URL}
       target="_blank"
       rel="noreferrer"
-      aria-label="RemoteDevsBR on GitHub"
+      aria-label={t("social.githubAria")}
       className="hidden sm:inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
     >
       <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true">

@@ -268,7 +268,7 @@ function JobsInner() {
       return;
     }
     if (trackedJobIds.has(j.id)) {
-      toast.info("Vaga já adicionada");
+      toast.info(t("jobs.track.alreadyTracked"));
       return;
     }
     const { error } = await supabase.from("applications").insert({
@@ -277,7 +277,7 @@ function JobsInner() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Adicionada às suas candidaturas");
+      toast.success(t("jobs.track.added"));
       setTrackedJobIds((prev) => {
         const next = new Set(prev);
         next.add(j.id);
@@ -419,7 +419,7 @@ function JobsInner() {
               <p className="text-muted-foreground mt-1 text-sm md:text-base">{t("jobs.subtitle")}</p>
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
-              <Button asChild variant="outline" size="sm"><Link href="/applications">My tracker</Link></Button>
+              <Button asChild variant="outline" size="sm"><Link href="/applications">{t("jobs.myTracker")}</Link></Button>
               {user ? (
                 <Dialog open={open} onOpenChange={(v) => {
                   if (!v) setEditingJobId(null);
@@ -457,10 +457,10 @@ function JobsInner() {
                         <Select value={form.seniority_level} onValueChange={(v) => setForm({ ...form, seniority_level: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="junior">Junior</SelectItem>
-                            <SelectItem value="mid">Mid</SelectItem>
-                            <SelectItem value="senior">Senior</SelectItem>
-                            <SelectItem value="lead">Lead</SelectItem>
+                            <SelectItem value="junior">{t("jobs.seniority.junior")}</SelectItem>
+                            <SelectItem value="mid">{t("jobs.seniority.mid")}</SelectItem>
+                            <SelectItem value="senior">{t("jobs.seniority.senior")}</SelectItem>
+                            <SelectItem value="lead">{t("jobs.seniority.lead")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -469,10 +469,10 @@ function JobsInner() {
                         <Select value={form.job_type} onValueChange={(v) => setForm({ ...form, job_type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="full_time">Full-time</SelectItem>
-                            <SelectItem value="contract">Contract</SelectItem>
-                            <SelectItem value="part_time">Part-time</SelectItem>
-                            <SelectItem value="freelance">Freelance</SelectItem>
+                            <SelectItem value="full_time">{t("jobs.type.fullTime")}</SelectItem>
+                            <SelectItem value="contract">{t("jobs.type.contract")}</SelectItem>
+                            <SelectItem value="part_time">{t("jobs.type.partTime")}</SelectItem>
+                            <SelectItem value="freelance">{t("jobs.type.freelance")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -483,9 +483,9 @@ function JobsInner() {
                         <Select value={form.location_type} onValueChange={(v) => setForm({ ...form, location_type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="remote">Remote</SelectItem>
-                            <SelectItem value="hybrid">Hybrid</SelectItem>
-                            <SelectItem value="onsite">Onsite</SelectItem>
+                            <SelectItem value="remote">{t("jobs.locType.remote")}</SelectItem>
+                            <SelectItem value="hybrid">{t("jobs.locType.hybrid")}</SelectItem>
+                            <SelectItem value="onsite">{t("jobs.locType.onsite")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -497,18 +497,18 @@ function JobsInner() {
                         <Select value={form.region_scope} onValueChange={(v) => setForm({ ...form, region_scope: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="worldwide">Worldwide</SelectItem>
-                            <SelectItem value="north_america">North America</SelectItem>
-                            <SelectItem value="latin_america">Latin America</SelectItem>
-                            <SelectItem value="europe">Europe</SelectItem>
-                            <SelectItem value="asia">Asia</SelectItem>
+                            <SelectItem value="worldwide">{t("jobs.region.worldwide")}</SelectItem>
+                            <SelectItem value="north_america">{t("jobs.region.na")}</SelectItem>
+                            <SelectItem value="latin_america">{t("jobs.region.latam")}</SelectItem>
+                            <SelectItem value="europe">{t("jobs.region.europe")}</SelectItem>
+                            <SelectItem value="asia">{t("jobs.region.asia")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div><Label>{t("jobs.post.countries")}</Label><Input value={form.country_codes} onChange={e=>setForm({...form, country_codes: e.target.value})} placeholder="BR, US, CA" /></div>
                     </div>
-                    <div><Label>{t("jobs.post.source")}</Label><Input value={form.source} onChange={e=>setForm({...form, source: e.target.value})} placeholder="greenhouse (optional)" /></div>
-                    <div><Label>{t("jobs.post.stack")}</Label><Input value={form.stack} onChange={e=>setForm({...form, stack: e.target.value})} placeholder="React, Node, AWS" /></div>
+                    <div><Label>{t("jobs.post.source")}</Label><Input value={form.source} onChange={e=>setForm({...form, source: e.target.value})} placeholder={t("jobs.post.sourcePlaceholder")} /></div>
+                    <div><Label>{t("jobs.post.stack")}</Label><Input value={form.stack} onChange={e=>setForm({...form, stack: e.target.value})} placeholder={t("jobs.post.stackPlaceholder")} /></div>
                     <div className="grid grid-cols-2 gap-3">
                       <div><Label>{t("jobs.post.salaryMin")}</Label><Input type="number" value={form.salary_min} onChange={e=>setForm({...form, salary_min: e.target.value})} /></div>
                       <div><Label>{t("jobs.post.salaryMax")}</Label><Input type="number" value={form.salary_max} onChange={e=>setForm({...form, salary_max: e.target.value})} /></div>
@@ -520,9 +520,9 @@ function JobsInner() {
                         <Select value={form.salary_period} onValueChange={(v) => setForm({ ...form, salary_period: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="year">Year</SelectItem>
-                            <SelectItem value="month">Month</SelectItem>
-                            <SelectItem value="hour">Hour</SelectItem>
+                            <SelectItem value="year">{t("jobs.period.year")}</SelectItem>
+                            <SelectItem value="month">{t("jobs.period.month")}</SelectItem>
+                            <SelectItem value="hour">{t("jobs.period.hour")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -669,10 +669,10 @@ function JobsInner() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {([
               { value: "all", label: t("jobs.filter.all") },
-              { value: "full_time", label: "⏱ Full-time" },
-              { value: "contract", label: "📋 Contract" },
-              { value: "part_time", label: "🕐 Part-time" },
-              { value: "freelance", label: "🎯 Freelance" },
+              { value: "full_time", label: "⏱ " + t("jobs.type.fullTime") },
+              { value: "contract", label: "📋 " + t("jobs.type.contract") },
+              { value: "part_time", label: "🕐 " + t("jobs.type.partTime") },
+              { value: "freelance", label: "🎯 " + t("jobs.type.freelance") },
             ] as { value: string; label: string }[]).map(opt => (
               <button
                 key={opt.value}
@@ -764,7 +764,7 @@ function JobsInner() {
             const initials = companyDisplay.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
             const postedDate = new Date(j.posted_at);
             const daysAgo = Math.floor((Date.now() - postedDate.getTime()) / 86400000);
-            const dateLabel = daysAgo === 0 ? "Today" : daysAgo === 1 ? "1d" : `${daysAgo}d`;
+            const dateLabel = daysAgo === 0 ? t("jobs.today") : daysAgo === 1 ? "1d" : `${daysAgo}d`;
             const allTags = [
               ...(j.stack ?? []),
               ...(j.job_perk_map ?? []).slice(0, 3).map(x => x.job_perks?.label).filter(Boolean) as string[],
@@ -791,9 +791,9 @@ function JobsInner() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-bold text-base leading-tight">{j.role}</h3>
-                    {j.source === "member" && <span className="text-[10px] uppercase bg-gold/15 text-gold px-1.5 py-0.5 rounded">Member</span>}
-                    {j.is_hot && <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5"><Flame className="h-3 w-3 mr-0.5" />Hot</Badge>}
-                    {j.is_featured && <Badge className="text-[10px] px-1.5 py-0.5">Featured</Badge>}
+                    {j.source === "member" && <span className="text-[10px] uppercase bg-gold/15 text-gold px-1.5 py-0.5 rounded">{t("jobs.memberBadge")}</span>}
+                    {j.is_hot && <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5"><Flame className="h-3 w-3 mr-0.5" />{t("jobs.hotBadge")}</Badge>}
+                    {j.is_featured && <Badge className="text-[10px] px-1.5 py-0.5">{t("jobs.featuredBadge")}</Badge>}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 mt-1">
                     <span className="text-sm font-medium text-muted-foreground">{companyDisplay}</span>
@@ -855,10 +855,10 @@ function JobsInner() {
                       )}
                     </Button>
                     <Button asChild size="sm" variant="outline" className="flex-1 md:flex-none text-xs h-7 px-2.5">
-                      <Link href={`/jobs/${j.slug}`}>Details</Link>
+                      <Link href={`/jobs/${j.slug}`}>{t("jobs.action.details")}</Link>
                     </Button>
                     <Button asChild size="sm" className="flex-1 md:flex-none text-xs h-7 px-3 gradient-go text-primary-foreground">
-                      <a href={j.apply_url} target="_blank" rel="noreferrer">Apply <ExternalLink className="h-3 w-3 ml-1" /></a>
+                      <a href={j.apply_url} target="_blank" rel="noreferrer">{t("jobs.action.apply")} <ExternalLink className="h-3 w-3 ml-1" /></a>
                     </Button>
                   </div>
                 </div>

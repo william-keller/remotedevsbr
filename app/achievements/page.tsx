@@ -11,9 +11,11 @@ import { Trophy, Flame, Star, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/Layout";
 import { RequireAuth } from "@/components/Guards";
+import { useI18n } from "@/lib/i18n";
 
 function AchievementsContent() {
   const { xp, streak, longestStreak, achievements, userAchievements, loading } = useEngagement();
+  const { t } = useI18n();
 
   const isEarned = (id: string) => {
     return userAchievements.some((ua) => ua.achievement_id === id);
@@ -25,10 +27,10 @@ function AchievementsContent() {
   };
 
   const categories = [
-    { id: "profile", label: "Profile & Identity", icon: <Target className="w-5 h-5" /> },
-    { id: "tools", label: "AI Tools", icon: <Star className="w-5 h-5" /> },
-    { id: "career", label: "Career Progress", icon: <Trophy className="w-5 h-5" /> },
-    { id: "engagement", label: "Engagement", icon: <Flame className="w-5 h-5" /> },
+    { id: "profile", label: t("achievements.catProfile"), icon: <Target className="w-5 h-5" /> },
+    { id: "tools", label: t("achievements.catTools"), icon: <Star className="w-5 h-5" /> },
+    { id: "career", label: t("achievements.catCareer"), icon: <Trophy className="w-5 h-5" /> },
+    { id: "engagement", label: t("achievements.catEngagement"), icon: <Flame className="w-5 h-5" /> },
   ];
 
   if (loading) {
@@ -59,10 +61,10 @@ function AchievementsContent() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Trophy className="text-amber-500" />
-              Your Achievements
+              {t("achievements.title")}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Track your progress, earn experience points, and level up your remote career.
+              {t("achievements.subtitle")}
             </p>
           </div>
           
@@ -73,10 +75,10 @@ function AchievementsContent() {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-500" />
-              Experience Level
+              {t("achievements.xpTitle")}
             </CardTitle>
             <CardDescription>
-              Earn XP by completing profile steps, using AI tools, and applying for jobs.
+              {t("achievements.xpDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>

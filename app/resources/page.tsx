@@ -39,7 +39,7 @@ export default function Resources() {
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="text-4xl font-bold">{t("nav.resources")}</h1>
-            <p className="text-muted-foreground mt-1">Artigos, guias, planilhas e links curados.</p>
+            <p className="text-muted-foreground mt-1">{t("resources.subtitle")}</p>
           </div>
           <Input placeholder={t("common.search")} value={q} onChange={e=>setQ(e.target.value)} className="max-w-xs" />
         </div>
