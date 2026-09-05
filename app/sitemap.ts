@@ -2,8 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { MetadataRoute } from "next";
 import { COVER_LETTER_EXAMPLES } from "@/lib/cover-letter-content";
+import { SITE_URL } from "@/lib/seo";
 
-const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://your-domain.example").replace(/\/+$/, "");
+const BASE_URL = SITE_URL;
 const APP_DIR = path.join(process.cwd(), "app");
 
 const PRIORITY_OVERRIDES: Record<string, number> = {
