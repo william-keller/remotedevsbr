@@ -3,6 +3,19 @@
 
 This version has breaking changes: APIs, conventions, and file structure may all differ from your training data. Before writing Next.js code, prefer checking the project's actual `app/` router structure and installed Next version docs. If `node_modules/` is present locally, you may also consult the bundled docs under `node_modules/next/dist/docs/`.
 <!-- END:nextjs-agent-rules -->
+# Branching
+
+Always start new feature/fix branches from the latest preview branch (`origin/preview`, the preview/staging deployment target). Never branch from `master`.
+
+Before creating a branch, run `git fetch origin` and create from the tip of `origin/preview`:
+
+```bash
+git fetch origin
+git checkout -b <branch-name> origin/preview
+```
+
+If `origin/preview` does not exist or work must target production directly, confirm with the user before falling back to `origin/master`. When opening a pull request for a branch started from `origin/preview`, target the PR at `preview` unless the user says otherwise.
+
 # AI Agents & Token Architecture
 
 RemoteDevsBR relies heavily on Large Language Models (LLMs) to power the "Free Tools" tier (which acts as the top of our funnel) and to power the forthcoming AI-driven candidate matching engine.
