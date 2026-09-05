@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { OpenGraphType } from "next/dist/lib/metadata/types/opengraph-types";
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://your-domain.example").replace(/\/+$/, "");
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://remotedevsbr.com").replace(/\/+$/, "");
 
 interface SeoConfig {
   title: string;

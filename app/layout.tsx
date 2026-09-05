@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-domain.example";
+import { SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "RemoteDevs BR - Trabalhe remoto para empresas dos EUA",
     template: "%s | RemoteDevs BR",
@@ -23,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "RemoteDevs BR - Trabalhe remoto para empresas dos EUA",
     description: "Acelere sua carreira internacional e encontre as melhores vagas remotas que pagam em dólar.",
-    url: siteUrl,
+    url: SITE_URL,
     siteName: "RemoteDevs BR",
     images: [
       {

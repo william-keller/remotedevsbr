@@ -1,6 +1,7 @@
 "use client";
 
 import Head from "next/head";
+import { SITE_URL } from "@/lib/seo";
 
 interface SEOProps {
   title: string;
@@ -17,7 +18,7 @@ export function SEO({ title, description, canonicalPath, ogType = "website", ogI
       ? structuredData
       : [structuredData]
     : [];
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://your-domain.example").replace(/\/+$/, "");
+  const baseUrl = SITE_URL;
   const canonicalUrl = canonicalPath ? `${baseUrl}${canonicalPath}` : undefined;
   const fullOgImage = ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`;
 
@@ -46,7 +47,6 @@ export function SEO({ title, description, canonicalPath, ogType = "website", ogI
         <script
           key={i}
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
         />
       ))}
