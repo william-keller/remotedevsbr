@@ -14,12 +14,12 @@ import {
   SUPPORTED_INVOICE_CURRENCIES,
   calculateSubtotal,
   normalizeInvoiceCurrency,
-} from "@/components/InvoicePreview";
+} from "@/lib/invoice";
+import { buildInvoicePdf, invoicePdfName } from "@/lib/invoice-pdf";
 import { Download, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 
-const PRINT_STORAGE_KEY = "invoice-generator-print-data";
 const CURRENCY_LABELS: Record<(typeof SUPPORTED_INVOICE_CURRENCIES)[number], string> = {
   BRL: "BRL (R$)",
   USD: "USD ($)",
@@ -108,7 +108,7 @@ export function InvoiceGeneratorPage() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(PRINT_STORAGE_KEY);
+      const saved = localStorage.getItem("invoice-generator-print-data");
       if (saved) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setInvoice(JSON.parse(saved));
@@ -182,12 +182,7 @@ export function InvoiceGeneratorPage() {
     setInvoice(nextInvoice);
 
     if (autoDownload) {
-      try {
-        localStorage.setItem(PRINT_STORAGE_KEY, JSON.stringify(nextInvoice));
-        window.open("/tools/invoice-generator/print", "_blank", "noopener,noreferrer");
-      } catch {
-        toast.error(t("invoice.printError"));
-      }
+      void downloadInvoice(nextInvoice);
     } else {
       toast.success(t("invoice.invoiceNumber") + " #" + newInvoiceNumber + " " + t("invoice.updated"));
     }
@@ -238,11 +233,14 @@ export function InvoiceGeneratorPage() {
     reader.readAsDataURL(file);
   };
 
-  const openPrint = () => {
+  const downloadInvoice = async (invoiceData?: InvoiceData) => {
+    const target = invoiceData ?? invoice;
     try {
-      localStorage.setItem(PRINT_STORAGE_KEY, JSON.stringify(invoice));
-      window.open("/tools/invoice-generator/print", "_blank", "noopener,noreferrer");
-    } catch {
+      const doc = await buildInvoicePdf(target, t, locale);
+      doc.save(invoicePdfName(target));
+      toast.success(t("common.completed"));
+    } catch (err) {
+      console.error("Failed to generate invoice PDF", err);
       toast.error(t("invoice.printError"));
     }
   };
@@ -525,7 +523,7 @@ export function InvoiceGeneratorPage() {
                   {t("invoice.generateNext")}
                 </Button>
               )}
-              <Button type="button" className="gradient-gold text-gold-foreground" onClick={openPrint}>
+              <Button type="button" className="gradient-gold text-gold-foreground" onClick={() => { void downloadInvoice(); }}>
                 <Download className="h-4 w-4 mr-2" />
                 {t("invoice.download")}
               </Button>
