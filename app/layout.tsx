@@ -1,7 +1,24 @@
-﻿import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SITE_URL } from "@/lib/seo";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#FAF8F5",
+};
+
+const siteVerification =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+  process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION ||
+  process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION
+    ? {
+        google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        bing: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION,
+        yandex: process.env.NEXT_PUBLIC_YANDEX_SITE_VERIFICATION,
+      }
+    : undefined;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -19,6 +36,16 @@ export const metadata: Metadata = {
     shortcut: "/favicon.png",
     apple: "/apple-icon.png",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+    },
+  },
+  verification: siteVerification,
   openGraph: {
     title: "RemoteDevs BR - Trabalhe remoto para empresas dos EUA",
     description: "Acelere sua carreira internacional e encontre as melhores vagas remotas que pagam em dólar.",

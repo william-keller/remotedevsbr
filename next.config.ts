@@ -10,6 +10,8 @@ const noindexPaths = [
   "/reset-password",
   "/update-password",
   "/english-check",
+  "/journey",
+  "/auth",
   "/admin/:path*",
   "/recruiter/:path*",
 ];
