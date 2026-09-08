@@ -114,10 +114,12 @@
 @layer base {
   * { border-color: hsl(var(--border)); }
   html { font-family: 'Inter', system-ui, sans-serif; }
+  html, body { overflow-x: clip; }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     @apply antialiased;
+    touch-action: manipulation;
     font-feature-settings: "ss01", "cv11";
   }
   h1, h2, h3, h4 {

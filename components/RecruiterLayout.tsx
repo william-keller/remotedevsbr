@@ -12,7 +12,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Users, Search, Building2, CreditCard, LogOut, Briefcase, Loader2 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Users, Search, Building2, CreditCard, LogOut, Briefcase, Loader2, Menu } from "lucide-react";
+import { useState } from "react";
 import { Footer } from "@/components/Layout";
 
 const navItems = [
@@ -25,6 +27,7 @@ export function RecruiterHeader() {
   const { user, profile, signOut } = useAuth();
   const { t } = useI18n();
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-slate-900 text-slate-50">
@@ -33,7 +36,7 @@ export function RecruiterHeader() {
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500 text-white shadow-glow">
             <Users className="h-4 w-4" />
           </span>
-          <span>RemoteDevs<span className="text-emerald-400">BR</span> <span className="font-normal text-sm text-slate-400 ml-2">{t("recruiter.forRecruiters")}</span></span>
+          <span>RemoteDevs<span className="text-emerald-400">BR</span> <span className="hidden sm:inline font-normal text-sm text-slate-400 ml-2">{t("recruiter.forRecruiters")}</span></span>
         </Link>
 
         <nav className="ml-8 hidden lg:flex items-center gap-6">
@@ -51,8 +54,8 @@ export function RecruiterHeader() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-slate-800">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex text-slate-300 hover:text-white hover:bg-slate-800">
              <Link href="/">{t("recruiter.switchToDev")}</Link>
           </Button>
           
@@ -72,6 +75,9 @@ export function RecruiterHeader() {
                   <div className="text-xs text-muted-foreground">{t("recruiter.accountLabel")}</div>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/">{t("recruiter.switchToDev")}</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => signOut()} className="text-red-500 focus:text-red-500 cursor-pointer">
                   <LogOut className="w-4 h-4 mr-2" />
                   {t("nav.signout")}
@@ -83,6 +89,33 @@ export function RecruiterHeader() {
               <Link href="/recruiter/auth">{t("recruiter.signinAs")}</Link>
             </Button>
           )}
+
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden text-slate-300 hover:text-white hover:bg-slate-800"><Menu className="h-5 w-5" /></Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <nav className="flex flex-col gap-1 mt-8">
+                {navItems.map(n => {
+                  const isActive = pathname === n.to || pathname.startsWith(n.to + "/");
+                  return (
+                    <Link
+                      key={n.to} href={n.to} onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ${isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}
+                    >
+                      {n.icon}
+                      {t(n.label)}
+                    </Link>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <Link href="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted">
+                  <Briefcase className="w-4 h-4" />
+                  {t("recruiter.switchToDev")}
+                </Link>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

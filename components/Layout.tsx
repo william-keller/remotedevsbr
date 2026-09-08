@@ -80,7 +80,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="container flex h-16 items-center gap-4">
-        <Link href="/" className="flex items-center gap-2.5 font-bold text-lg tracking-tight group">
+        <Link href="/" className="flex items-center gap-2 font-bold text-base sm:text-lg tracking-tight group">
           <img src="/logo-globe.svg" alt="RemoteDevsBR" width={32} height={32} className="h-8 w-8 object-contain transition-transform group-hover:scale-105" />
           <span>RemoteDevs<span className="text-primary">BR</span></span>
         </Link>

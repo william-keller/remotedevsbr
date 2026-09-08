@@ -197,7 +197,7 @@ export function SalaryPage() {
           </div>
         </div>
         <h2 className="text-xl font-bold mb-3">{t("salary.usdResults")}</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 rounded-xl border bg-card p-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 rounded-xl border bg-card p-6 mb-8">
           <Field
             label={t("salary.hourly")}
             prefix="$"
@@ -240,7 +240,7 @@ export function SalaryPage() {
           />
         </div>
         <h2 className="text-xl font-bold mb-3">{t("salary.brlResults")}</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 rounded-xl border bg-card p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 rounded-xl border bg-card p-6">
           <Field
             label={t("salary.hourly")}
             prefix="R$"

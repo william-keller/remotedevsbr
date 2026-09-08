@@ -52,7 +52,7 @@ export default function RecruiterDashboard() {
         canonicalPath="/recruiter/dashboard"
       />
       <div className="container py-10 space-y-8">
-        <div className="flex justify-between items-end">
+        <div className="flex justify-between items-end flex-wrap gap-3">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">{t("recruiter.welcome")} {profile?.company_name}</h1>
                 <p className="text-muted-foreground mt-1">{t("recruiter.overview")}</p>
