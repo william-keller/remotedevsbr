@@ -46,10 +46,28 @@ type AnalyticsData = {
     completed_lessons: number;
     achievements_series: SeriesPoint[];
   };
+  ebook: {
+    total_copies: number;
+    today_copies: number;
+    brl_cents: { total: number; today: number };
+    usd_cents: { total: number; today: number };
+    sales_daily: DailyPoint[];
+  };
 };
 
 function formatNumber(n: number): string {
   return n.toLocaleString("en-US");
+}
+
+function formatSalesMoney(brlCents: number, usdCents: number): string {
+  const parts: string[] = [];
+  if (brlCents > 0) {
+    parts.push(`R$ ${(brlCents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+  }
+  if (usdCents > 0) {
+    parts.push(`US$ ${Math.round(usdCents / 100).toLocaleString("en-US")}`);
+  }
+  return parts.length > 0 ? parts.join(" + ") : "R$ 0,00";
 }
 
 function StatCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
@@ -152,6 +170,9 @@ export default function AnalyticsPage() {
   };
   const onboardingConfig = {
     value: { label: t("analytics.completedOnboarding"), theme: { light: rose, dark: roseDark } },
+  };
+  const ebookSalesConfig = {
+    added: { label: t("analytics.ebookDaily"), theme: { light: goldLight, dark: gold } },
   };
 
   return (
@@ -320,6 +341,37 @@ export default function AnalyticsPage() {
               <ChartCard title={t("analytics.jobsDaily")}>
                 <ChartContainer config={jobsConfig} className="h-64">
                   <BarChart data={data.growth.jobs_daily} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
+                    <YAxis width={40} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="added" fill="var(--color-added)" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </ChartCard>
+            </div>
+
+            <SectionHeading
+              kicker={t("analytics.ebook")}
+              title={t("analytics.ebook")}
+              sub={t("analytics.ebookSub")}
+            />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <StatCard
+                label={t("analytics.ebookCopies")}
+                value={data.ebook.total_copies}
+                sub={`${formatNumber(data.ebook.today_copies)} ${t("analytics.ebookToday")}`}
+              />
+              <StatCard
+                label={t("analytics.ebookRevenue")}
+                value={formatSalesMoney(data.ebook.brl_cents.total, data.ebook.usd_cents.total)}
+                sub={`${formatSalesMoney(data.ebook.brl_cents.today, data.ebook.usd_cents.today)} ${t("analytics.ebookToday")}`}
+              />
+            </div>
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <ChartCard title={t("analytics.ebookDaily")}>
+                <ChartContainer config={ebookSalesConfig} className="h-64">
+                  <BarChart data={data.ebook.sales_daily} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
                     <YAxis width={40} tickLine={false} axisLine={false} allowDecimals={false} />

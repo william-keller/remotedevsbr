@@ -57,6 +57,12 @@ Deno.serve(async (req) => {
       // Handle one-time ebook purchase
       if (meta.type === "ebook") {
         const customerEmail = s.customer_details?.email || s.customer_email || undefined;
+        await admin.from("ebook_sales").upsert({
+          stripe_session_id: s.id,
+          customer_email: customerEmail ?? null,
+          currency: meta.currency === "usd" ? "usd" : "brl",
+          amount_cents: s.amount_total ?? 0,
+        }, { onConflict: "stripe_session_id" });
         await notifyEbookPurchase({
           userEmail: customerEmail,
           amountCents: s.amount_total ?? undefined,

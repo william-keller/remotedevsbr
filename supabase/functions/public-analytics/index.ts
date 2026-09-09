@@ -82,11 +82,12 @@ async function computeAnalytics(): Promise<{ generated_at: string; [key: string]
   const achievementEarnRows = await client.from("user_achievements").select("earned_at");
   const classRows = await client.from("class_progress").select("completed");
   const companyRows = await client.from("companies").select("id");
+  const ebookRows = await client.from("ebook_sales").select("created_at, currency, amount_cents");
 
   if (
     memberRows.error || jobRows.error || analysisRows.error || applicationRows.error
     || projectRows.error || recruiterRows.error || searchRows.error || interestRows.error
-    || achievementEarnRows.error || classRows.error || companyRows.error
+    || achievementEarnRows.error || classRows.error || companyRows.error || ebookRows.error
   ) {
     throw new Error("Failed to aggregate analytics");
   }
@@ -128,6 +129,20 @@ async function computeAnalytics(): Promise<{ generated_at: string; [key: string]
     .filter((r) => r.created_at);
   const completedLessons = (classRows.data ?? []).filter((r) => r.completed).length;
 
+  // Ebook sales (copies + revenue per currency; "today" is UTC-day aligned with
+  // the get_ebook_sales_summary SQL function used by the /ebook counters).
+  const ebookSalesArr = (ebookRows.data ?? []).map((r) => ({
+    created_at: r.created_at,
+    currency: r.currency,
+    amount_cents: r.amount_cents,
+  }));
+  const utcToday = new Date().toISOString().slice(0, 10);
+  const sumCents = (rows: typeof ebookSalesArr, currency: string) =>
+    rows.filter((r) => r.currency === currency).reduce((acc, r) => acc + (r.amount_cents ?? 0), 0);
+  const todayEbookSales = ebookSalesArr.filter(
+    (r) => !!r.created_at && r.created_at.slice(0, 10) === utcToday,
+  );
+
   return {
     generated_at: new Date().toISOString(),
     catalogue: {
@@ -165,6 +180,19 @@ async function computeAnalytics(): Promise<{ generated_at: string; [key: string]
       achievements_earned: achievementEarned.length,
       completed_lessons: completedLessons,
       achievements_series: buildCumulativeSeries(achievementEarned),
+    },
+    ebook: {
+      total_copies: ebookSalesArr.length,
+      today_copies: todayEbookSales.length,
+      brl_cents: {
+        total: sumCents(ebookSalesArr, "brl"),
+        today: sumCents(todayEbookSales, "brl"),
+      },
+      usd_cents: {
+        total: sumCents(ebookSalesArr, "usd"),
+        today: sumCents(todayEbookSales, "usd"),
+      },
+      sales_daily: buildDailySeries(ebookSalesArr.map((r) => ({ created_at: r.created_at }))),
     },
   };
 }

@@ -35,6 +35,45 @@ const EBOOK_URLS = {
 
 type Currency = "brl" | "usd";
 
+type SalesSummary = {
+  total_copies: number;
+  today_copies: number;
+  total_brl_cents: number;
+  total_usd_cents: number;
+  today_brl_cents: number;
+  today_usd_cents: number;
+};
+
+function formatSalesMoney(brlCents: number, usdCents: number): string {
+  const parts: string[] = [];
+  if (brlCents > 0) {
+    parts.push(`R$ ${(brlCents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+  }
+  if (usdCents > 0) {
+    parts.push(`US$ ${Math.round(usdCents / 100).toLocaleString("en-US")}`);
+  }
+  return parts.length > 0 ? parts.join(" + ") : "R$ 0,00";
+}
+
+function SalesCounter({
+  sales,
+  t,
+  locale,
+}: {
+  sales: SalesSummary | null;
+  t: (key: string) => string;
+  locale: string;
+}) {
+  if (!sales) return null;
+  const fmt = (n: number) => n.toLocaleString(locale === "pt" ? "pt-BR" : "en-US");
+  return (
+    <p className="text-xs text-muted-foreground">
+      {fmt(sales.total_copies)} {t("ebook.copiesSold")} ({formatSalesMoney(sales.total_brl_cents, sales.total_usd_cents)}).{" "}
+      {fmt(sales.today_copies)} {t("ebook.soldToday")} ({formatSalesMoney(sales.today_brl_cents, sales.today_usd_cents)}).
+    </p>
+  );
+}
+
 function Inner() {
   const { t, locale } = useI18n();
   const params = useSearchParams();
@@ -48,6 +87,7 @@ function Inner() {
     if (typeof window !== "undefined" && window.sessionStorage.getItem("ebook_paid")) return true;
     return params.get("success") === "1";
   });
+  const [sales, setSales] = useState<SalesSummary | null>(null);
 
   useEffect(() => {
     if (params.get("success")) {
@@ -59,6 +99,17 @@ function Inner() {
       router.replace(pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("get_ebook_sales_summary" as never);
+      if (!cancelled && !error && data) setSales(data as unknown as SalesSummary);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const formatPrice = (c: Currency) => (c === "brl" ? "R$ 67,90" : "US$ 19");
@@ -247,6 +298,9 @@ function Inner() {
                 <Check className="h-4 w-4 text-primary shrink-0" />
                 {t("ebook.bothVersions")}
               </p>
+              <div className="mt-3 flex justify-center md:justify-start">
+                <SalesCounter sales={sales} t={t} locale={locale} />
+              </div>
             </div>
           </div>
         </div>
@@ -375,6 +429,9 @@ function Inner() {
             <ShieldCheck className="h-3.5 w-3.5" />
             {t("ebook.stripeNote")}
           </p>
+          <div className="mt-3 flex justify-center">
+            <SalesCounter sales={sales} t={t} locale={locale} />
+          </div>
         </div>
       </section>
 
