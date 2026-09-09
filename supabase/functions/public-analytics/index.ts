@@ -107,6 +107,22 @@ async function computeAnalytics(): Promise<{ generated_at: string; [key: string]
   ).length;
   const totalXp = memberRowsArr.reduce((acc, r) => acc + (r.xp_points ?? 0), 0);
 
+  // SaaS funnel metrics
+  const totalMembers = memberRowsArr.length;
+  const signupToOnboarded = totalMembers > 0 ? Math.round((onboarded / totalMembers) * 100) : 0;
+  const onboardedToPro = onboarded > 0 ? Math.round((proMembers / onboarded) * 100) : 0;
+  const signupToPro = totalMembers > 0 ? Math.round((proMembers / totalMembers) * 100) : 0;
+
+  // Pro subscriber growth series (cumulative)
+  const proRows = memberRowsArr
+    .filter((r) => r.subscription_status === "pro" && r.created_at)
+    .map((r) => ({ created_at: r.created_at }));
+
+  // Onboarding completion series (cumulative) - use onboarded_at timestamps
+  const onboardedRows = memberRowsArr
+    .filter((r) => r.onboarded_at)
+    .map((r) => ({ created_at: r.onboarded_at }));
+
   const achievementEarned = (achievementEarnRows.data ?? [])
     .map((r) => ({ created_at: r.earned_at }))
     .filter((r) => r.created_at);
@@ -134,7 +150,12 @@ async function computeAnalytics(): Promise<{ generated_at: string; [key: string]
     funnel: {
       resume_analyses: analysisRowsArr.length,
       applications: applicationRowsArr.length,
+      signup_to_onboarded: signupToOnboarded,
+      onboarded_to_pro: onboardedToPro,
+      signup_to_pro: signupToPro,
     },
+    pro_subscribers_series: buildCumulativeSeries(proRows),
+    onboarded_series: buildCumulativeSeries(onboardedRows),
     recruiter: {
       companies: recruiterRowsArr.length,
       searches: searchRowsArr.length,

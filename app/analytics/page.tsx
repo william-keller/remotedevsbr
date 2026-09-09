@@ -31,7 +31,15 @@ type AnalyticsData = {
     analyses_daily: DailyPoint[];
     members_daily: DailyPoint[];
   };
-  funnel: { resume_analyses: number; applications: number };
+  funnel: {
+    resume_analyses: number;
+    applications: number;
+    signup_to_onboarded: number;
+    onboarded_to_pro: number;
+    signup_to_pro: number;
+  };
+  pro_subscribers_series: SeriesPoint[];
+  onboarded_series: SeriesPoint[];
   recruiter: { companies: number; searches: number; interests: number };
   engagement: {
     achievements_earned: number;
@@ -122,6 +130,10 @@ export default function AnalyticsPage() {
   const goldLight = "hsl(42 95% 55%)";
   const teal = "hsl(186 60% 40%)";
   const tealDark = "hsl(186 70% 55%)";
+  const violet = "hsl(262 60% 50%)";
+  const violetDark = "hsl(262 70% 65%)";
+  const rose = "hsl(350 65% 55%)";
+  const roseDark = "hsl(350 75% 65%)";
 
   const membersConfig = {
     members: { label: t("analytics.members"), theme: { light: green, dark: greenDark } },
@@ -134,6 +146,12 @@ export default function AnalyticsPage() {
   };
   const achConfig = {
     value: { label: t("analytics.achievementsShort"), theme: { light: goldLight, dark: gold } },
+  };
+  const proConfig = {
+    value: { label: t("analytics.proSubscribers"), theme: { light: violet, dark: violetDark } },
+  };
+  const onboardingConfig = {
+    value: { label: t("analytics.completedOnboarding"), theme: { light: rose, dark: roseDark } },
   };
 
   return (
@@ -169,6 +187,65 @@ export default function AnalyticsPage() {
               <StatCard label={t("analytics.hiringCompanies")} value={data.catalogue.companies} />
               <StatCard label={t("analytics.communityProjects")} value={data.catalogue.side_projects} />
               <StatCard label={t("analytics.analysesRun")} value={data.funnel.resume_analyses} />
+            </div>
+
+            <SectionHeading
+              kicker={t("analytics.platformHealth")}
+              title={t("analytics.conversionFunnel")}
+              sub={t("analytics.funnelSub")}
+            />
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <StatCard
+                label={t("analytics.signupToOnboarded")}
+                value={`${data.funnel.signup_to_onboarded}%`}
+                sub={`${formatNumber(data.members.onboarded)} / ${formatNumber(data.members.total)}`}
+              />
+              <StatCard
+                label={t("analytics.onboardedToPro")}
+                value={`${data.funnel.onboarded_to_pro}%`}
+                sub={`${formatNumber(data.members.pro_subscribers)} / ${formatNumber(data.members.onboarded)}`}
+              />
+              <StatCard
+                label={t("analytics.signupToPro")}
+                value={`${data.funnel.signup_to_pro}%`}
+                sub={`${formatNumber(data.members.pro_subscribers)} / ${formatNumber(data.members.total)}`}
+              />
+            </div>
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <ChartCard title={t("analytics.proGrowth")}>
+                <ChartContainer config={proConfig} className="h-64">
+                  <AreaChart data={data.pro_subscribers_series} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="fillPro" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-value)" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="var(--color-value)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
+                    <YAxis width={40} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area dataKey="value" type="monotone" stroke="var(--color-value)" fill="url(#fillPro)" strokeWidth={2} />
+                  </AreaChart>
+                </ChartContainer>
+              </ChartCard>
+              <ChartCard title={t("analytics.onboardingGrowth")}>
+                <ChartContainer config={onboardingConfig} className="h-64">
+                  <AreaChart data={data.onboarded_series} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="fillOnboarded" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-value)" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="var(--color-value)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
+                    <YAxis width={40} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area dataKey="value" type="monotone" stroke="var(--color-value)" fill="url(#fillOnboarded)" strokeWidth={2} />
+                  </AreaChart>
+                </ChartContainer>
+              </ChartCard>
             </div>
 
             <SectionHeading
