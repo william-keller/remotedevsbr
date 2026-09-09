@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AppLayout } from "@/components/Layout";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -13,7 +14,7 @@ import { PaywallCard } from "@/components/ProBadge";
 import { RequireAuth } from "@/components/Guards";
 import { Markdown } from "@/components/Markdown";
 import { toast } from "sonner";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, BookOpen } from "lucide-react";
 
 function Inner() {
   const { isPro } = useAuth();
@@ -51,6 +52,20 @@ function Inner() {
             <Button onClick={run} disabled={loading} className="w-full gradient-gold text-gold-foreground">
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}{t("linkedin.analyze")}
             </Button>
+            <div className="mt-6 rounded-xl border bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold leading-snug">{t("linkedin.adTitle")}</h4>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("linkedin.adSub")}</p>
+                </div>
+              </div>
+              <Button asChild size="sm" className="mt-4 w-full gradient-gold text-gold-foreground">
+                <Link href="/ebook">{t("linkedin.adCta")}</Link>
+              </Button>
+            </div>
           </div>
           <div className="rounded-xl border bg-card p-6 min-h-[400px]">
             <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{t("linkedin.suggestions")}</h3>
