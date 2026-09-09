@@ -72,7 +72,9 @@ function ChartCard({
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className={`${height}`}>{children}</CardContent>
+      <CardContent className={`${height} overflow-x-auto`}>
+        <div className="min-w-[500px]">{children}</div>
+      </CardContent>
     </Card>
   );
 }
