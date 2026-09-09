@@ -19,8 +19,8 @@ export function AuthModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (!open ? closeAuthModal() : undefined)}>
-      <DialogContent className="p-0 overflow-hidden">
-        <div className="p-6">
+      <DialogContent className="p-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="p-6 overflow-y-auto flex-1 min-h-0">
           <DialogHeader className="mb-2">
             <DialogTitle>{t("auth.modalTitle")}</DialogTitle>
           </DialogHeader>
