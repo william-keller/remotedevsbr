@@ -58,7 +58,7 @@ function StatCard({ label, value, sub }: { label: string; value: number | string
       <CardContent className="p-5">
         <div className="text-sm font-medium text-muted-foreground">{label}</div>
         <div className="mt-2 text-3xl font-extrabold tracking-tight tabular-nums">
-          {formatNumber(Number(value))}
+          {typeof value === "number" ? formatNumber(value) : value}
         </div>
         {sub ? <div className="mt-1 text-xs text-muted-foreground">{sub}</div> : null}
       </CardContent>
