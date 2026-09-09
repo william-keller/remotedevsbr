@@ -18,7 +18,6 @@ const MAX_ATTEMPTS = 3;
 // Ordered best to worst capability, each on a distinct provider pool where
 // possible so a saturated pool falls through to the next model.
 export const FREE_MODELS: string[] = [
-  "thinkingmachines/inkling:free",
   "nvidia/nemotron-3-ultra:free",
   "dots-studio/dots3-note-preview:free",
   "nvidia/nemotron-3-super:free",
@@ -53,7 +52,7 @@ export async function callAI(
   for (const model of opts.models) {
     const resp = await postWithRetry(model, body, headers, baseUrl);
 
-    if (resp.status === 429 || resp.status === 404 || resp.status >= 500) {
+    if (resp.status === 429 || resp.status === 403 || resp.status === 404 || resp.status >= 500) {
       continue;
     }
     if (resp.status === 402) {
