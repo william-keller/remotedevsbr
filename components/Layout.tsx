@@ -24,24 +24,45 @@ import { useFeatureToggles } from "@/lib/feature-toggles";
 import { GitHubBadge } from "@/components/GitHubBadge";
 import { DiscordBadge } from "@/components/DiscordBadge";
 
-export function LangToggle() {
+function FlagBR({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 24" className={className} role="img" aria-label="Portugues">
+      <rect width="36" height="24" rx="3" fill="#009739" />
+      <polygon points="18,4 33,12 18,20 3,12" fill="#FEDD00" />
+      <circle cx="18" cy="12" r="5" fill="#002776" />
+    </svg>
+  );
+}
+
+function FlagUS({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 24" className={className} role="img" aria-label="English">
+      <rect width="36" height="24" rx="3" fill="#B22234" />
+      {[0, 4, 8, 12, 16, 20].map((y) => (
+        <rect key={y} y={y} width="36" height="2" fill="white" />
+      ))}
+      <rect width="14" height="12" rx="3" fill="#3C3B6E" />
+    </svg>
+  );
+}
+
+export function LangToggle({ compact = false }: { compact?: boolean }) {
   const { locale, setLocale } = useI18n();
   const { isEnabled } = useFeatureToggles();
 
-  // Hide the toggle entirely when English is disabled via feature flag
   if (!isEnabled("is_english_lang_enabled")) return null;
 
+  const next = locale === "pt" ? "en" : "pt";
+  const Flag = locale === "pt" ? FlagBR : FlagUS;
+
   return (
-    <div className="inline-flex rounded-md border border-border bg-background/60 p-0.5 text-xs font-semibold">
-      <button
-        onClick={() => setLocale("pt")}
-        className={`px-2 py-1 rounded-sm transition ${locale === "pt" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
-      >PT</button>
-      <button
-        onClick={() => setLocale("en")}
-        className={`px-2 py-1 rounded-sm transition ${locale === "en" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
-      >EN</button>
-    </div>
+    <button
+      onClick={() => setLocale(next)}
+      title={next === "en" ? "Switch to English" : "Mudar para Portugues"}
+      className={`inline-flex items-center justify-center rounded-md border border-border bg-background/60 transition hover:bg-muted ${compact ? "h-8 w-10" : "h-9 w-12"}`}
+    >
+      <Flag className="h-5 w-auto rounded-[2px] shadow-sm" />
+    </button>
   );
 }
 
@@ -99,6 +120,7 @@ export function Header() {
         <div className="ml-auto flex items-center gap-2">
           <GitHubBadge />
           <DiscordBadge />
+          <LangToggle compact />
           {user ? (
             <>
               <div className="hidden md:block">
@@ -139,18 +161,13 @@ export function Header() {
               </DropdownMenu>
             </>
           ) : (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => openAuthModal("signin")}>
-                {t("nav.signin")}
-              </Button>
-              <Button
-                size="sm"
-                className="gradient-go text-primary-foreground hover:opacity-90"
-                onClick={() => openAuthModal("signup")}
-              >
-                {t("nav.signup")}
-              </Button>
-            </>
+            <Button
+              size="sm"
+              className="gradient-go text-primary-foreground hover:opacity-90"
+              onClick={() => openAuthModal("signin")}
+            >
+              {t("nav.signin")}
+            </Button>
           )}
 
           <Sheet open={open} onOpenChange={setOpen}>
@@ -166,6 +183,9 @@ export function Header() {
                   >{t(n.key)}</NavLink>
                 ))}
               </nav>
+              <div className="mt-6 px-3">
+                <LangToggle />
+              </div>
             </SheetContent>
           </Sheet>
         </div>
