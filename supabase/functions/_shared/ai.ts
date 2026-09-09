@@ -18,9 +18,11 @@ const MAX_ATTEMPTS = 3;
 // Ordered best to worst capability, each on a distinct provider pool where
 // possible so a saturated pool falls through to the next model.
 export const FREE_MODELS: string[] = [
-  "nvidia/nemotron-3-ultra:free",
-  "dots-studio/dots3-note-preview:free",
-  "nvidia/nemotron-3-super:free",
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "dots-studio/dots-3-note-preview:free",
+  "nvidia/nemotron-3-super-120b-a12b:free",
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
 ];
 
 export async function callAI(

@@ -18,7 +18,7 @@ The core growth engine for the platform. Developers upload a PDF, we extract the
 
 **Provider:** OpenAI-compatible chat completions endpoint via `_shared/ai.ts` (defaults to OpenRouter at `https://openrouter.ai/api/v1`). Configured with the `OPENAI_API_KEY` and optional `OPENAI_BASE_URL` edge secrets.
 
-**Model Choice (current):** Free-tier OpenRouter models with ordered fallback. Each AI tool passes `models: FREE_MODELS` from `_shared/ai.ts`: `nvidia/nemotron-3-ultra:free` (best), then `dots-studio/dots3-note-preview:free`, `nvidia/nemotron-3-super:free` (worst). On HTTP 429/403/404/5xx the shared client (`_shared/ai.ts`) retries with backoff, then falls through to the next model.
+**Model Choice (current):** Free-tier OpenRouter models with ordered fallback. Each AI tool passes `models: FREE_MODELS` from `_shared/ai.ts`: `nvidia/nemotron-3-ultra-550b-a55b:free` (best), then `dots-studio/dots-3-note-preview:free`, `nvidia/nemotron-3-super-120b-a12b:free`, `google/gemma-4-31b-it:free`, `google/gemma-4-26b-a4b-it:free` (worst). On HTTP 429/403/404/5xx the shared client (`_shared/ai.ts`) retries with backoff, then falls through to the next model.
 * **Why free tier?** Zero cost while the account carries no OpenRouter credits. Resume analysis requires reading ~1,000-2,000 tokens of raw text and generating a few hundred tokens of structured JSON. Free-tier `:free` models impose daily request limits, lower rate limits, and can be temporarily saturated upstream; revisit paid Flash-tier models if throttling or quality regresses.
 
 **Token Flow:**
@@ -88,7 +88,7 @@ This serves as a quick-reference map for all major touchpoints within the archit
 
 ### Supabase Edge Functions (API)
 * `analyze-resume` (POST) - Takes a PDF or text, extracts text if needed, calls the shared OpenAI-compatible helper (Gemini Flash via OpenRouter), stores `resume_analyses`, and returns partial + gated full report.
-* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (uses `FREE_MODELS`, starting with `nvidia/nemotron-3-ultra:free`, falling back through dots-studio and nvidia variants).
+* `ai-tools` (POST) - Resume builder + LinkedIn tuner via OpenRouter through the shared OpenAI-compatible helper (uses `FREE_MODELS`, starting with `nvidia/nemotron-3-ultra-550b-a55b:free`, falling back through dots-studio, nvidia, and gemma variants).
 * `track-activity` (POST) - Logs user actions, updates daily streaks, and checks for newly unlocked achievements.
 * `process-engagement-emails` (CRON) - Background job that emails users about lost streaks or incomplete profiles.
 * `recruiter-search` (POST) - Queries the `profiles` table. Returns full or obfuscated (blurred) data depending on the recruiter's subscription tier.
