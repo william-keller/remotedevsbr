@@ -114,26 +114,33 @@ All new keys under `ebook.*` namespace in both `pt` and `en` dictionaries in `li
 3. `supabase/functions/ebook-checkout/index.ts` - Stripe checkout
 4. `supabase/functions/stripe-webhook/index.ts` - Add ebook handling
 5. `lib/i18n-dicts.ts` - Add ebook.* keys
+6. `app/ebook/download/[lang]/route.ts` - Streams the full PDFs from Vercel Blob
 
 ## Download URLs
 
-PDF download URLs must be stored as environment variables (not hardcoded):
-- `NEXT_PUBLIC_EBOOK_URL_PT` - pt-BR full version URL (env only, no public fallback)
-- `NEXT_PUBLIC_EBOOK_URL_EN` - EN full version URL (env only, no public fallback)
+The full PDFs live in Vercel Blob as **private blobs**, uploaded under the pathnames
+`LinkedIn_Performance_Playbook.pdf` (EN) and `LinkedIn_Performance_Playbook_pt-BR.pdf` (PT).
+The server route `app/ebook/download/[lang]/route.ts` resolves each language to its blob
+pathname, reads it with the `@vercel/blob` `get()` (authenticated server-side via
+`BLOB_READ_WRITE_TOKEN`), and streams it back with `Content-Type: application/pdf` and
+`Content-Disposition: attachment` so the browser downloads it.
+
+The success page links to `/ebook/download/pt` and `/ebook/download/en`. No public blob
+URL is exposed to the browser, and no per-version NEXT_PUBLIC URL env var is needed.
+
+The free preview PDFs are copied to `public/ebook/` (publicly served). The preview URLs can
+be overridden via env vars:
 - `NEXT_PUBLIC_EBOOK_PREVIEW_URL_PT` - pt-BR preview URL (falls back to `public/ebook/`)
 - `NEXT_PUBLIC_EBOOK_PREVIEW_URL_EN` - EN preview URL (falls back to `public/ebook/`)
 
-The free preview PDFs are copied to `public/ebook/` (publicly served). The full versions
-are NOT public: they are delivered on the success page via env URLs pointing to protected
-storage (Supabase Storage / CDN). If an env URL is unset, the corresponding download button
-is not rendered. The success page also persists the purchase marker in `sessionStorage` so
-the download links survive a refresh during the same session.
+The success page also persists the purchase marker in `sessionStorage` so the download links
+survive a refresh during the same session.
 
 ## Constraints
 
 - No new CSS variables or design tokens
-- No new dependencies
+- No hardcoded full-PDF URLs in the client: delivery goes through the download route, which
+  resolves private Vercel Blobs server-side
 - Must work without authentication (guest Stripe checkout, `mode: "payment"`)
 - Must handle both BRL (R$ 67,90) and USD (US$ 19) via a currency toggle
-- Full PDF download URLs come from env vars; only previews are served from `/public`
-- Follow existing code patterns (AppLayout, useI18n, supabase client)
+- Only previews are served from `/public`

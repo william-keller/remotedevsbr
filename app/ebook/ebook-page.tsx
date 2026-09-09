@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 
 const EBOOK_URLS = {
-  pt: process.env.NEXT_PUBLIC_EBOOK_URL_PT || "",
-  en: process.env.NEXT_PUBLIC_EBOOK_URL_EN || "",
+  pt: "/ebook/download/pt",
+  en: "/ebook/download/en",
   previewPt:
     process.env.NEXT_PUBLIC_EBOOK_PREVIEW_URL_PT ||
     "/ebook/LinkedIn_Performance_Playbook_pt-BR_Preview.pdf",
@@ -139,22 +139,18 @@ function Inner() {
               </button>
             </div>
             <div className="flex flex-wrap gap-3 mt-6">
-              {EBOOK_URLS.pt && (
-                <Button asChild size="lg" className="gradient-go text-primary-foreground">
-                  <a href={EBOOK_URLS.pt} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    {t("ebook.successPt")}
-                  </a>
-                </Button>
-              )}
-              {EBOOK_URLS.en && (
-                <Button asChild size="lg" variant="outline">
-                  <a href={EBOOK_URLS.en} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    {t("ebook.successEn")}
-                  </a>
-                </Button>
-              )}
+              <Button asChild size="lg" className="gradient-go text-primary-foreground">
+                <a href={EBOOK_URLS.pt}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {t("ebook.successPt")}
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <a href={EBOOK_URLS.en}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {t("ebook.successEn")}
+                </a>
+              </Button>
             </div>
           </div>
         </section>
