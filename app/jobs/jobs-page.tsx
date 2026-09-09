@@ -423,10 +423,10 @@ function JobsInner() {
                   <DialogTrigger asChild>
                     <Button size="sm" className="gradient-gold text-gold-foreground"><Send className="h-4 w-4 mr-1" />{t("jobs.post.cta")}</Button>
                   </DialogTrigger>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-w-lg max-h-[90dvh] sm:max-h-[85vh] flex flex-col overflow-hidden p-4 sm:p-6">
                   <DialogHeader><DialogTitle>{editingJobId ? t("jobs.post.editTitle") : t("jobs.post.title")}</DialogTitle></DialogHeader>
                   <p className="text-xs text-muted-foreground -mt-2">{t("jobs.post.subtitle")}</p>
-                  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                  <div className="space-y-3 overflow-y-auto pr-1 flex-1 min-h-0">
                     <div>
                       <Label>{t("jobs.post.applyUrl")} *</Label>
                       <div className="flex gap-2">
