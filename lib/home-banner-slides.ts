@@ -179,6 +179,36 @@ const companyHeroEn = slideShell(`
       <a href="https://www.groovybr.com/calculadora-de-impostos-pj" target="_blank" rel="noopener noreferrer nofollow" class="${btnOutline}">Tax simulator</a>
     </div>`);
 
+const ebookHeroPt = slideShell(`
+    <span class="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold mb-6">
+      ${sparklesSvg} Ebook novo
+    </span>
+    <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-white leading-[1.05]">
+      Cresça no LinkedIn e conquiste contratos nos EUA.
+    </h1>
+    <p class="mt-6 text-lg md:text-xl text-white/80 max-w-2xl">
+      Seguidores, views, engajamento e autoridade no seu perfil. O LinkedIn Performance Playbook, o sistema completo em um só ebook.
+    </p>
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a href="/ebook" class="${btnPrimary}">Pegar o ebook ${arrowRightSvg}</a>
+      <a href="/ebook" class="${btnOutline}">Ler o conteúdo</a>
+    </div>`);
+
+const ebookHeroEn = slideShell(`
+    <span class="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold mb-6">
+      ${sparklesSvg} New ebook
+    </span>
+    <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-white leading-[1.05]">
+      Grow on LinkedIn and land US contracts.
+    </h1>
+    <p class="mt-6 text-lg md:text-xl text-white/80 max-w-2xl">
+      Followers, views, engagement, and authority on your profile. The LinkedIn Performance Playbook, the complete system in one ebook.
+    </p>
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a href="/ebook" class="${btnPrimary}">Get the ebook ${arrowRightSvg}</a>
+      <a href="/ebook" class="${btnOutline}">See what's inside</a>
+    </div>`);
+
 export const HOME_BANNER_SLIDES: HomeBannerSlide[] = [
   {
     id: "default-hero",
@@ -204,6 +234,11 @@ export const HOME_BANNER_SLIDES: HomeBannerSlide[] = [
     id: "company-hero",
     html_pt: companyHeroPt,
     html_en: companyHeroEn,
+  },
+  {
+    id: "ebook-hero",
+    html_pt: ebookHeroPt,
+    html_en: ebookHeroEn,
   },
 ];
 
