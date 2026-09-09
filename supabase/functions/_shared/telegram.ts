@@ -140,6 +140,32 @@ export async function notifyMockInterviewPurchased(data: {
   return sendTelegramMessage(message);
 }
 
+export async function notifyEbookPurchase(data: {
+  userEmail?: string;
+  amountCents?: number;
+  currency?: string;
+}) {
+  const user = escapeHtml(data.userEmail || "Customer");
+  const currencyLabel = escapeHtml(data.currency || "BRL");
+  const amountStr = data.amountCents
+    ? `${
+        data.currency === "USD"
+          ? `US$ ${(data.amountCents / 100).toFixed(2)}`
+          : `R$ ${(data.amountCents / 100).toFixed(2)}`
+      }`
+    : currencyLabel;
+
+  const message = [
+    `📕 <b>LinkedIn Performance Playbook Sold!</b>`,
+    ``,
+    `💰 <b>Amount:</b> ${amountStr}`,
+    `👤 <b>Buyer:</b> ${user}`,
+    `🌎 <b>Bought in:</b> ${currencyLabel}`,
+  ].join("\n");
+
+  return sendTelegramMessage(message);
+}
+
 export async function notifyJobSubmitted(data: {
   role: string;
   companyName: string;

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import Stripe from "https://esm.sh/stripe@17.5.0?target=deno";
 import {
+  notifyEbookPurchase,
   notifyMockInterviewPurchased,
   notifyProSubscription,
 } from "../_shared/telegram.ts";
@@ -53,8 +54,16 @@ Deno.serve(async (req) => {
       const s = event.data.object as Stripe.Checkout.Session;
       const meta = s.metadata ?? {};
 
-      // Handle mock-interview one-time payments
-      if (meta.type === "mock_interview" && s.id) {
+      // Handle one-time ebook purchase
+      if (meta.type === "ebook") {
+        const customerEmail = s.customer_details?.email || s.customer_email || undefined;
+        await notifyEbookPurchase({
+          userEmail: customerEmail,
+          amountCents: s.amount_total ?? undefined,
+          currency: meta.currency === "usd" ? "USD" : "BRL",
+        });
+        console.log("ebook purchase confirmed", s.id);
+      } else if (meta.type === "mock_interview" && s.id) {
         await admin
           .from("mock_interview_purchases")
           .update({ status: "paid", stripe_payment_intent_id: s.payment_intent as string ?? null })
