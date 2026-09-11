@@ -140,6 +140,55 @@ export async function notifyMockInterviewPurchased(data: {
   return sendTelegramMessage(message);
 }
 
+const INTEREST_LABELS: Record<string, string> = {
+  career: "Plano Career",
+  start: "Plano START",
+  global: "Plano GLOBAL",
+  squad: "Formar turma",
+  team: "Empresas (Time)",
+};
+
+const LEVEL_LABELS: Record<string, string> = {
+  beginner: "Iniciante",
+  intermediate: "Intermediário",
+  upper_intermediate: "Intermediário-avançado",
+  advanced: "Avançado",
+  unsure: "Não sabe",
+};
+
+export async function notifyEnglishLead(data: {
+  fullName: string;
+  email: string;
+  whatsapp?: string;
+  interestType: string;
+  currentLevel?: string;
+  schedulePreference?: string;
+}) {
+  const name = escapeHtml(data.fullName);
+  const email = escapeHtml(data.email);
+  const whatsapp = data.whatsapp ? escapeHtml(data.whatsapp) : "";
+  const interest = escapeHtml(INTEREST_LABELS[data.interestType] || data.interestType);
+  const level = data.currentLevel
+    ? escapeHtml(LEVEL_LABELS[data.currentLevel] || data.currentLevel)
+    : "";
+  const schedule = data.schedulePreference ? escapeHtml(data.schedulePreference) : "";
+
+  const message = [
+    `🇬🇧 <b>Novo Lead do Programa de Inglês!</b>`,
+    ``,
+    `🎯 <b>Interesse:</b> ${interest}`,
+    `👤 <b>Nome:</b> ${name}`,
+    `📧 <b>E-mail:</b> ${email}`,
+    whatsapp ? `📱 <b>WhatsApp:</b> ${whatsapp}` : null,
+    level ? `📊 <b>Nível:</b> ${level}` : null,
+    schedule ? `🗓 <b>Preferência:</b> ${schedule}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return sendTelegramMessage(message);
+}
+
 export async function notifyEbookPurchase(data: {
   userEmail?: string;
   amountCents?: number;
