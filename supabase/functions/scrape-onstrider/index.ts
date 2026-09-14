@@ -13,7 +13,6 @@ import {
   notifyOnstriderScrape,
   notifyOnstriderScrapeFailed,
 } from "../_shared/telegram.ts";
-import { enforceRateLimit } from "../_shared/rate_limit.ts";
 
 const SOURCE = "onstrider";
 const DEFAULT_COMPANY = "Onstrider";
@@ -547,14 +546,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const rate = await enforceRateLimit(req, "scrape-onstrider", 10, 24 * 60 * 60 * 1000);
-    if (!rate.allowed) {
-      return new Response(JSON.stringify({ error: rate.error }), {
-        status: rate.status,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     const client = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
