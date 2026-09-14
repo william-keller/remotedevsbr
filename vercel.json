@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/scrape-onstrider",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
